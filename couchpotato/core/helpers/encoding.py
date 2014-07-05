@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
+
 from string import ascii_letters, digits
 from urllib import quote_plus
 import os
@@ -11,6 +15,15 @@ import six
 
 log = CPLog(__name__)
 
+special_chars = {u'ä': u'ae',
+                 u'ö': u'oe',
+                 u'ü': u'ue',
+                 }
+
+
+
+def handle_special_chars(line):
+    return u''.join(special_chars.get(c, c) for c in line)
 
 def toSafeString(original):
     valid_chars = "-_.() %s%s" % (ascii_letters, digits)

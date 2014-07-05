@@ -4,7 +4,7 @@ import re
 from datetime import date
 import json
 
-from couchpotato.core.helpers.encoding import simplifyString
+from couchpotato.core.helpers.encoding import simplifyString, handle_special_chars
 from couchpotato.core.logger import CPLog
 from couchpotato.core.media._base.providers.och.base import OCHProvider
 from couchpotato.core.helpers.variable import tryInt
@@ -27,7 +27,7 @@ class Base(OCHProvider):
         titles.extend(alt_titles);
         titles.append(title)
         for title in titles:
-            self.do_search(title, results)
+            self.do_search(handle_special_chars(title), results)
         if not results:
             shortenedAltTitles = []
             # trying to delete original title string from alt title string
