@@ -45,7 +45,7 @@ class Base(NZBProvider, RSS):
     def _searchOnHost(self, host, media, quality, results):
 
         query = self.buildUrl(media, host)
-        url = '%s&%s' % (self.getUrl(host['host']), query)
+        url = '%s%s' % (self.getUrl(host['host']), query)
         nzbs = self.getRSSData(url, cache_timeout = 1800, headers = {'User-Agent': Env.getIdentifier()})
 
         for nzb in nzbs:
@@ -83,7 +83,7 @@ class Base(NZBProvider, RSS):
                 try:
                     # Get details for extended description to retrieve passwords
                     query = self.buildDetailsUrl(nzb_id, host['api_key'])
-                    url = '%s&%s' % (self.getUrl(host['host']), query)
+                    url = '%s%s' % (self.getUrl(host['host']), query)
                     nzb_details = self.getRSSData(url, cache_timeout = 1800, headers = {'User-Agent': Env.getIdentifier()})[0]
 
                     description = self.getTextElement(nzb_details, 'description')
@@ -235,7 +235,7 @@ config = [{
                 },
                 {
                     'name': 'host',
-                    'default': 'api.nzb.su,api.dognzb.cr,nzbs.org,https://index.nzbgeek.info,https://www.nzbfinder.ws',
+                    'default': 'api.nzb.su,api.dognzb.cr,nzbs.org,https://api.nzbgeek.info,https://www.nzbfinder.ws',
                     'description': 'The hostname of your newznab provider',
                 },
                 {
