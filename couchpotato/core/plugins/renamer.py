@@ -854,6 +854,8 @@ Remove it if you want it to be renamed (again, or at least let it try again)
             reg, replace_with = r
             string = re.sub(reg, replace_with, string)
 
+        string = string.rstrip(',_-/\\ ')
+
         return string
 
     def checkSnatched(self, fire_scan = True):
