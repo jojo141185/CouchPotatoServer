@@ -65,7 +65,7 @@ class Release(Plugin):
         log.debug('Removing releases from dashboard')
 
         now = time.time()
-        week = 262080
+        week = 604800
 
         db = get_db()
 
@@ -95,7 +95,7 @@ class Release(Plugin):
         del media_exist
 
         # get movies last_edit more than a week ago
-        medias = fireEvent('media.with_status', 'done', single = True)
+        medias = fireEvent('media.with_status', ['done','active'], single = True)
 
         for media in medias:
             if media.get('last_edit', 0) > (now - week):
@@ -111,7 +111,8 @@ class Release(Plugin):
                 elif rel['status'] in ['snatched', 'downloaded']:
                     self.updateStatus(rel['_id'], status = 'ignored')
 
-            fireEvent('media.untag', media.get('_id'), 'recent', single = True)
+            if 'recent' in media.get('tags', []):
+                fireEvent('media.untag', media.get('_id'), 'recent', single = True)
 
     def add(self, group, update_info = True, update_id = None):
 
@@ -325,7 +326,7 @@ class Release(Plugin):
                 rls['download_info'] = download_result
                 db.update(rls)
 
-            log_movie = '%s (%s) in %s' % (getTitle(media), media['info']['year'], rls['quality'])
+            log_movie = '%s (%s) in %s' % (getTitle(media), media['info'].get('year'), rls['quality'])
             snatch_message = 'Snatched "%s": %s' % (data.get('name'), log_movie)
             log.info(snatch_message)
             fireEvent('%s.snatched' % data['type'], message = snatch_message, data = media)
