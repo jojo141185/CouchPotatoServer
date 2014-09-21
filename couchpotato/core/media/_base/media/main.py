@@ -77,6 +77,7 @@ class MediaPlugin(MediaBase):
         addEvent('app.load', self.addSingleListView, priority = 100)
         addEvent('app.load', self.addSingleCharView, priority = 100)
         addEvent('app.load', self.addSingleDeleteView, priority = 100)
+        addEvent('app.load', self.cleanupFaults)
 
         addEvent('media.get', self.get)
         addEvent('media.with_status', self.withStatus)
@@ -86,6 +87,18 @@ class MediaPlugin(MediaBase):
         addEvent('media.restatus', self.restatus)
         addEvent('media.tag', self.tag)
         addEvent('media.untag', self.unTag)
+
+    # Wrongly tagged media files
+    def cleanupFaults(self):
+        medias = fireEvent('media.with_status', 'ignored', single = True) or []
+
+        db = get_db()
+        for media in medias:
+            try:
+                media['status'] = 'done'
+                db.update(media)
+            except:
+                pass
 
     def refresh(self, id = '', **kwargs):
         handlers = []
@@ -178,8 +191,10 @@ class MediaPlugin(MediaBase):
                             continue
 
                         yield doc
-                    except RecordNotFound:
+                    except (RecordDeleted, RecordNotFound):
                         log.debug('Record not found, skipping: %s', ms['_id'])
+                    except (ValueError, EOFError):
+                        fireEvent('database.delete_corrupted', ms.get('_id'), traceback_error = traceback.format_exc(0))
                 else:
                     yield ms
 
@@ -280,6 +295,10 @@ class MediaPlugin(MediaBase):
 
             media = fireEvent('media.get', media_id, single = True)
 
+            # Skip if no media has been found
+            if not media:
+                continue
+
             # Merge releases with movie dict
             medias.append(media)
 
@@ -373,7 +392,7 @@ class MediaPlugin(MediaBase):
             if x['_id'] in media_ids:
                 chars.add(x['key'])
 
-            if len(chars) == 25:
+            if len(chars) == 27:
                 break
 
         return list(chars)
@@ -472,7 +491,7 @@ class MediaPlugin(MediaBase):
             }
         })
 
-    def restatus(self, media_id):
+    def restatus(self, media_id, tag_recent = True):
 
         try:
             db = get_db()
@@ -511,7 +530,8 @@ class MediaPlugin(MediaBase):
                 db.update(m)
 
                 # Tag media as recent
-                self.tag(media_id, 'recent', update_edited = True)
+                if tag_recent:
+                    self.tag(media_id, 'recent', update_edited = True)
 
             return m['status']
         except:
