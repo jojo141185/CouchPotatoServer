@@ -141,17 +141,17 @@ class MovieSearcher(SearcherBase, MovieTypeBase):
         previous_releases = movie.get('releases', [])
         too_early_to_search = []
         outside_eta_results = 0
-        alway_search = self.conf('always_search')
+        always_search = self.conf('always_search')
         ignore_eta = manual
         total_result_count = 0
 
         fireEvent('notify.frontend', type = 'movie.searcher.started', data = {'_id': movie['_id']}, message = 'Searching for "%s"' % default_title)
 
         # Ignore eta once every 7 days
-        if not alway_search:
+        if not always_search:
             prop_name = 'last_ignored_eta.%s' % movie['_id']
             last_ignored_eta = float(Env.prop(prop_name, default = 0))
-            if last_ignored_eta > time.time() - 604800:
+            if last_ignored_eta < time.time() - 604800:
                 ignore_eta = True
                 Env.prop(prop_name, value = time.time())
 
@@ -166,11 +166,12 @@ class MovieSearcher(SearcherBase, MovieTypeBase):
                 'quality': q_identifier,
                 'finish': profile['finish'][index],
                 'wait_for': tryInt(profile['wait_for'][index]),
-                '3d': profile['3d'][index] if profile.get('3d') else False
+                '3d': profile['3d'][index] if profile.get('3d') else False,
+                'minimum_score': profile.get('minimum_score', 1),
             }
 
             could_not_be_released = not self.couldBeReleased(q_identifier in pre_releases, release_dates, movie['info']['year'])
-            if not alway_search and could_not_be_released:
+            if not always_search and could_not_be_released:
                 too_early_to_search.append(q_identifier)
 
                 # Skip release, if ETA isn't ignored
@@ -196,19 +197,12 @@ class MovieSearcher(SearcherBase, MovieTypeBase):
                 break
 
             quality = fireEvent('quality.single', identifier = q_identifier, single = True)
-            log.info('Search for %s in %s%s', (default_title, quality['label'], ' ignoring ETA' if alway_search or ignore_eta else ''))
+            log.info('Search for %s in %s%s', (default_title, quality['label'], ' ignoring ETA' if always_search or ignore_eta else ''))
 
             # Extend quality with profile customs
             quality['custom'] = quality_custom
 
             results = fireEvent('searcher.search', search_protocols, movie, quality, single = True) or []
-            results_count = len(results)
-            total_result_count += results_count
-            if results_count == 0:
-                log.debug('Nothing found for %s in %s', (default_title, quality['label']))
-
-            # Keep track of releases found outside ETA window
-            outside_eta_results += results_count if could_not_be_released else 0
 
             # Check if movie isn't deleted while searching
             if not fireEvent('media.get', movie.get('_id'), single = True):
@@ -216,14 +210,20 @@ class MovieSearcher(SearcherBase, MovieTypeBase):
 
             # Add them to this movie releases list
             found_releases += fireEvent('release.create_from_search', results, movie, quality, single = True)
+            results_count = len(found_releases)
+            total_result_count += results_count
+            if results_count == 0:
+                log.debug('Nothing found for %s in %s', (default_title, quality['label']))
+
+            # Keep track of releases found outside ETA window
+            outside_eta_results += results_count if could_not_be_released else 0
 
             # Don't trigger download, but notify user of available releases
-            if could_not_be_released:
-                if results_count > 0:
-                    log.debug('Found %s releases for "%s", but ETA isn\'t correct yet.', (results_count, default_title))
+            if could_not_be_released and results_count > 0:
+                log.debug('Found %s releases for "%s", but ETA isn\'t correct yet.', (results_count, default_title))
 
             # Try find a valid result and download it
-            if (force_download or not could_not_be_released or alway_search) and fireEvent('release.try_download_result', results, movie, quality_custom, single = True):
+            if (force_download or not could_not_be_released or always_search) and fireEvent('release.try_download_result', results, movie, quality_custom, single = True):
                 ret = True
 
             # Remove releases that aren't found anymore

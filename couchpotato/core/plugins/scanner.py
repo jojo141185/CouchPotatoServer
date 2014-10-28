@@ -120,7 +120,7 @@ class Scanner(Plugin):
         '()([ab])(\.....?)$'  #*a.mkv
     ]
 
-    cp_imdb = '(.cp.(?P<id>tt[0-9{7}]+).)'
+    cp_imdb = '\.cp\((?P<id>tt[0-9]+),?\s?(?P<random>[A-Za-z0-9]+)?\)'
 
     def __init__(self):
 
@@ -131,7 +131,7 @@ class Scanner(Plugin):
         addEvent('scanner.name_year', self.getReleaseNameYear)
         addEvent('scanner.partnumber', self.getPartNumber)
 
-    def scan(self, folder = None, files = None, release_download = None, simple = False, newer_than = 0, return_ignored = True, on_found = None):
+    def scan(self, folder = None, files = None, release_download = None, simple = False, newer_than = 0, return_ignored = True, check_file_date = True, on_found = None):
 
         folder = sp(folder)
 
@@ -145,7 +145,6 @@ class Scanner(Plugin):
 
         # Scan all files of the folder if no files are set
         if not files:
-            check_file_date = True
             try:
                 files = []
                 for root, dirs, walk_files in os.walk(folder, followlinks=True):
@@ -492,7 +491,7 @@ class Scanner(Plugin):
 
         data['quality_type'] = 'HD' if data.get('resolution_width', 0) >= 1280 or data['quality'].get('hd') else 'SD'
 
-        filename = re.sub('(.cp\(tt[0-9{7}]+\))', '', files[0])
+        filename = re.sub(self.cp_imdb, '', files[0])
         data['group'] = self.getGroup(filename[len(folder):])
         data['source'] = self.getSourceMedia(filename)
         if data['quality'].get('is_3d', 0):
