@@ -196,7 +196,7 @@ class TheMovieDb(MovieProvider):
         params = tryUrlencode(params)
 
         try:
-            url = 'http://api.themoviedb.org/3/%s?api_key=%s%s' % (call, self.conf('api_key'), '&%s' % params if params else '')
+            url = 'http://api.themoviedb.org/3/%s?api_key=%s&language=%s%s' % (call, self.conf('api_key'), self.conf('preferred_language'), '&%s' % params if params else '')
             data = self.getJsonData(url, show_error = False)
         except:
             log.debug('Movie not found: %s, %s', (call, params))
@@ -218,6 +218,18 @@ config = [{
     'name': 'themoviedb',
     'groups': [
         {
+            'tab': 'searcher',
+            'name': 'searcher',
+            'options': [
+                {
+                    'name': 'preferred_language',
+                    'label': 'Preferred langauge code',
+                    'description': 'Please provide your language code. It will be used for providers supporting altnerate title searching.',
+                    'default': 'en',
+                    'placeholder': 'en|de|fr...',
+                },
+            ],
+        }, {
             'tab': 'providers',
             'name': 'tmdb',
             'label': 'TheMovieDB',
