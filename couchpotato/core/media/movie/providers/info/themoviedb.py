@@ -140,6 +140,7 @@ class TheMovieDb(MovieProvider):
             'via_tmdb': True,
             'tmdb_id': movie.get('id'),
             'titles': [toUnicode(movie.get('title'))],
+            'alternate_titles': [m['title'] for m in movie['alternative_titles']['titles'] if self.conf('preferred_language') in m['iso_3166_1']],
             'original_title': movie.get('original_title'),
             'images': images,
             'imdb': movie.get('imdb_id'),
