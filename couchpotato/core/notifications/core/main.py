@@ -14,6 +14,7 @@ from couchpotato.core.logger import CPLog
 from couchpotato.core.notifications.base import Notification
 from .index import NotificationIndex, NotificationUnreadIndex
 from couchpotato.environment import Env
+from tornado.ioloop import IOLoop
 
 
 log = CPLog(__name__)
@@ -110,11 +111,11 @@ class CoreNotifier(Notification):
 
         if limit_offset:
             splt = splitString(limit_offset)
-            limit = splt[0]
-            offset = 0 if len(splt) is 1 else splt[1]
-            results = db.get_many('notification', limit = limit, offset = offset, with_doc = True)
+            limit = tryInt(splt[0])
+            offset = tryInt(0 if len(splt) is 1 else splt[1])
+            results = db.all('notification', limit = limit, offset = offset, with_doc = True)
         else:
-            results = db.get_many('notification', limit = 200, with_doc = True)
+            results = db.all('notification', limit = 200, with_doc = True)
 
         notifications = []
         for n in results:
@@ -148,16 +149,15 @@ class CoreNotifier(Notification):
     def notify(self, message = '', data = None, listener = None):
         if not data: data = {}
 
+        n = {
+            '_t': 'notification',
+            'time': int(time.time()),
+        }
+
         try:
             db = get_db()
 
-            data['notification_type'] = listener if listener else 'unknown'
-
-            n = {
-                '_t': 'notification',
-                'time': int(time.time()),
-                'message': toUnicode(message)
-            }
+            n['message'] = toUnicode(message)
 
             if data.get('sticky'):
                 n['sticky'] = True
@@ -170,7 +170,7 @@ class CoreNotifier(Notification):
 
             return True
         except:
-            log.error('Failed notify: %s', traceback.format_exc())
+            log.error('Failed notify "%s": %s', (n, traceback.format_exc()))
 
     def frontend(self, type = 'notification', data = None, message = None):
         if not data: data = {}
@@ -190,7 +190,7 @@ class CoreNotifier(Notification):
         while len(self.listeners) > 0 and not self.shuttingDown():
             try:
                 listener, last_id = self.listeners.pop()
-                listener({
+                IOLoop.current().add_callback(listener, {
                     'success': True,
                     'result': [notification],
                 })

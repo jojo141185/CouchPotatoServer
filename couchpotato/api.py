@@ -34,7 +34,7 @@ def run_async(func):
 def run_handler(route, kwargs, callback = None):
     try:
         res = api[route](**kwargs)
-        IOLoop.current().add_callback(callback, res, route)
+        callback(res, route)
     except:
         log.error('Failed doing api request "%s": %s', (route, traceback.format_exc()))
         callback({'success': False, 'error': 'Failed returning results'}, route)
@@ -51,24 +51,22 @@ class NonBlockHandler(RequestHandler):
         start, stop = api_nonblock[route]
         self.stopper = stop
 
-        start(self.onNewMessage, last_id = self.get_argument('last_id', None))
+        start(self.sendData, last_id = self.get_argument('last_id', None))
 
-    def onNewMessage(self, response):
-        if self.request.connection.stream.closed():
-            self.on_connection_close()
-            return
+    def sendData(self, response):
+        if not self.request.connection.stream.closed():
+            try:
+                self.finish(response)
+            except:
+                log.debug('Failed doing nonblock request, probably already closed: %s', (traceback.format_exc()))
+                try: self.finish({'success': False, 'error': 'Failed returning results'})
+                except: pass
 
-        try:
-            self.finish(response)
-        except:
-            log.debug('Failed doing nonblock request, probably already closed: %s', (traceback.format_exc()))
-            try: self.finish({'success': False, 'error': 'Failed returning results'})
-            except: pass
+        self.removeStopper()
 
-    def on_connection_close(self):
-
+    def removeStopper(self):
         if self.stopper:
-            self.stopper(self.onNewMessage)
+            self.stopper(self.sendData)
 
         self.stopper = None
 
@@ -84,10 +82,11 @@ def addNonBlockApiView(route, func_tuple, docs = None, **kwargs):
 
 # Blocking API handler
 class ApiHandler(RequestHandler):
+    route = None
 
     @asynchronous
     def get(self, route, *args, **kwargs):
-        route = route.strip('/')
+        self.route = route = route.strip('/')
         if not api.get(route):
             self.write('API call doesn\'t seem to exist')
             self.finish()
@@ -124,11 +123,15 @@ class ApiHandler(RequestHandler):
             except:
                 log.error('Failed write error "%s": %s', (route, traceback.format_exc()))
 
-            api_locks[route].release()
+            self.unlock()
 
     post = get
 
     def taskFinished(self, result, route):
+        IOLoop.current().add_callback(self.sendData, result, route)
+        self.unlock()
+
+    def sendData(self, result, route):
 
         if not self.request.connection.stream.closed():
             try:
@@ -136,14 +139,12 @@ class ApiHandler(RequestHandler):
                 jsonp_callback = self.get_argument('callback_func', default = None)
 
                 if jsonp_callback:
-                    self.write(str(jsonp_callback) + '(' + json.dumps(result) + ')')
-                    self.set_header("Content-Type", "text/javascript")
-                    self.finish()
+                    self.set_header('Content-Type', 'text/javascript')
+                    self.finish(str(jsonp_callback) + '(' + json.dumps(result) + ')')
                 elif isinstance(result, tuple) and result[0] == 'redirect':
                     self.redirect(result[1])
                 else:
-                    self.write(result)
-                    self.finish()
+                    self.finish(result)
             except UnicodeDecodeError:
                 log.error('Failed proper encode: %s', traceback.format_exc())
             except:
@@ -151,7 +152,9 @@ class ApiHandler(RequestHandler):
                 try: self.finish({'success': False, 'error': 'Failed returning results'})
                 except: pass
 
-        api_locks[route].release()
+    def unlock(self):
+        try: api_locks[self.route].release()
+        except: pass
 
 
 def addApiView(route, func, static = False, docs = None, **kwargs):
