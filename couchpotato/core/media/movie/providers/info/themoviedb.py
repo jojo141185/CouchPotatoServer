@@ -90,7 +90,7 @@ class TheMovieDb(MovieProvider):
 
         # Do request, append other items
         movie = self.request('movie/%s' % movie.get('id'), {
-            'append_to_response': 'alternative_titles&country=' + self.conf('preferred_language').upper() + (',images,casts' if extended else '')
+            'append_to_response': 'alternative_titles' + (',images,casts' if extended else '')
         })
         if not movie:
             return
@@ -140,7 +140,7 @@ class TheMovieDb(MovieProvider):
             'via_tmdb': True,
             'tmdb_id': movie.get('id'),
             'titles': [toUnicode(movie.get('title'))],
-            'alternate_titles': [m['title'] for m in movie['alternative_titles']['titles']],
+            'alternate_titles': [m['title'] for m in movie['alternative_titles']['titles'] if self.conf('preferred_language').upper() in m['iso_3166_1']],
             'original_title': movie.get('original_title'),
             'images': images,
             'imdb': movie.get('imdb_id'),
@@ -197,7 +197,7 @@ class TheMovieDb(MovieProvider):
         params = tryUrlencode(params)
 
         try:
-            url = 'http://api.themoviedb.org/3/%s?api_key=%s%s' % (call, self.conf('api_key'), '&%s' % params if params else '')
+            url = 'http://api.themoviedb.org/3/%s?api_key=%s&language=%s%s' % (call, self.conf('api_key'), self.conf('preferred_language'), '&%s' % params if params else '')
             data = self.getJsonData(url, show_error = False)
         except:
             log.debug('Movie not found: %s, %s', (call, params))
