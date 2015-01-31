@@ -24,7 +24,7 @@ class Base(OCHProvider):
         #Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
         alt_titles = movie['info'].get('alternate_titles', [])
         titles = []
-        titles.extend(alt_titles);
+        titles.extend(alt_titles)
         titles.append(title)
         for title in titles:
             self.do_search(handle_special_chars(title), results)
