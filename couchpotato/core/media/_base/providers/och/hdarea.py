@@ -77,7 +77,7 @@ class Base(OCHProvider):
                             res["year"] = year
                             log.debug('Found release year of movie: %s' % year)
                         except (AttributeError, TypeError):
-                            log.debug('Release year of movie not found!')
+                            log.debug('Could not extract movie release year from details website!')
                     if u"Größe:" in match:
                         try:
                             size_raw = re.search(r"[0-9]+([,.][0-9]+)?\s+\w+", str(match.nextSibling)).group()
@@ -85,9 +85,9 @@ class Base(OCHProvider):
                             res["size"] = size
                             log.debug('Found size of release: %s Mb' % size)
                         except (AttributeError, TypeError):
-                            log.debug('Size of movie release not found!')
+                            log.debug('Could not extract size of release from details')
             except (AttributeError, TypeError, KeyError):
-                log.error('Could not fetch release details from Release Website.')
+                log.error('Could not fetch release details from website.')
 
             #Suche nach Links und pruefe auf invisible (teilw. veraltete Links im Code). Filtere Hoster.
             try:
@@ -112,7 +112,7 @@ class Base(OCHProvider):
                     log.debug('No DL-Links on Hoster(s) [%s] found :(' % (self.conf('hosters')))
                     return None
             except (AttributeError, TypeError, KeyError):
-                log.error('Could not fetch dl-Links from Release Website.')
+                log.error('Could not fetch download links from movie details.')
         except (AttributeError, TypeError, KeyError):
             return None
         return None
