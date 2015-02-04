@@ -27,7 +27,7 @@ class Base(OCHProvider):
         titles.extend(alt_titles);
         titles.append(title)
         for title in titles:
-            self.do_search(simplifyString(handle_special_chars(title)), results)
+            self.do_search(handle_special_chars(title), results)
         if not results:
             shortenedAltTitles = []
             # trying to delete original title string from alt title string
@@ -177,7 +177,7 @@ class Base(OCHProvider):
 
 
     def parseMovieDetailPage(self, data):
-        dom = BeautifulSoup(data)
+        dom = BeautifulSoup(data, "html5lib")
         pageCenter = dom.find('div', attrs={"class": "main_cent"})
 
         header = pageCenter.find('div', attrs={"class": "head"})
@@ -194,7 +194,7 @@ class Base(OCHProvider):
     def parseSearchResult(self, data):
         #print data
         try:
-            dom = BeautifulSoup(data)
+            dom = BeautifulSoup(data, "html5lib")
 
             #content = dom.find('div', attrs={"class": "main_cent"})
             movieEntries = dom.findAll('div', attrs={"class": "table2"})
