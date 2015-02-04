@@ -24,11 +24,10 @@ class Base(OCHProvider):
         #Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
         alt_titles = movie['info'].get('alternate_titles', [])
         titles = []
-        titles.extend(alt_titles);
-        titles.append(movie['title'])
+        titles.extend(alt_titles)
         titles.append(title)
         for title in titles:
-            self.do_search(handle_special_chars(title), results)
+            self.do_search('%s %s' % (handle_special_chars(title), quality['identifier']), results)
         if not results:
             shortenedAltTitles = []
             # trying to delete original title string from alt title string
@@ -40,7 +39,7 @@ class Base(OCHProvider):
 
 
     def do_search(self, title, results):
-        query = '"%s"' % (urllib.quote_plus(title))
+        query = '%s' % (urllib.quote_plus(title))
         searchUrl = self.urls['search'] % query
 
         log.debug('fetching data from %s' % searchUrl)
@@ -173,7 +172,7 @@ class Base(OCHProvider):
     def parseHeader(self, header):
         res = {}
         res['name'] = []
-        res['name'] = header.h2.a.text
+        res['name'] = header.h2.a.text.split('-')[0]
         return res
 
 
@@ -187,9 +186,14 @@ class Base(OCHProvider):
 
         res = {}
         if header and content and subHeader:
-            res.update(self.parseHeader(header))
-            res.update(self.parseSubHeader(subHeader))
-            res.update(self.parseContent(content))
+            try:
+                res.update(self.parseHeader(header))
+                res.update(self.parseSubHeader(subHeader))
+                res.update(self.parseContent(content))
+            except TypeError:
+                #ignore release if content,header or subHeader couldn't be parsed correctly
+                return
+            res['name'] = res['name']+'.'+res['year'] #adding year to name for better matching
         return res
 
     def parseSearchResult(self, data):
