@@ -22,20 +22,12 @@ class Base(OCHProvider):
 
     def _searchOnTitle(self, title, movie, quality, results):
         #Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
-        alt_titles = movie['info'].get('alternate_titles', [])
         titles = []
-        titles.extend(alt_titles)
-        titles.append(title)
+        titles.append(movie['title'])
+        titles.append(movie['info']['original_title'])
+
         for title in titles:
             self.do_search('%s %s' % (handle_special_chars(title), quality['identifier']), results)
-        if not results:
-            shortenedAltTitles = []
-            # trying to delete original title string from alt title string
-            for alt_title in alt_titles:
-                if alt_title != title and title in alt_title:
-                    shortenedAltTitle = simplifyString(alt_title).replace(simplifyString(title), "")
-                    if shortenedAltTitle != "":
-                        self.do_search(shortenedAltTitle, results)
 
 
     def do_search(self, title, results):

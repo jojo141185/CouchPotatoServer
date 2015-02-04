@@ -22,9 +22,9 @@ class TheMovieDb(MovieProvider):
     }
 
     def __init__(self):
-        addEvent('info.search', self.search, priority = 3)
-        addEvent('movie.search', self.search, priority = 3)
-        addEvent('movie.info', self.getInfo, priority = 3)
+        addEvent('info.search', self.search, priority = 1)
+        addEvent('movie.search', self.search, priority = 1)
+        addEvent('movie.info', self.getInfo, priority = 1)
         addEvent('movie.info_by_tmdb', self.getInfo)
         addEvent('app.load', self.config)
 
@@ -90,7 +90,7 @@ class TheMovieDb(MovieProvider):
 
         # Do request, append other items
         movie = self.request('movie/%s' % movie.get('id'), {
-            'country': self.conf('preferred_language').upper(),
+            'language': self.conf('preferred_language').upper(),
             'append_to_response': ('images,casts,' if extended else '') + 'alternative_titles'
         })
         if not movie:
