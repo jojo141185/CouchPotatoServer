@@ -22,7 +22,7 @@ class xrelApi(MovieProvider):
         if release != None:
             for uri in release['payload']['ext_info']['uris']:
                 if 'imdb' in uri and id == uri.split(':')[1]:
-                    log.debug('%s verified by %s' & (relName, release['payload']['link_href']))
+                    log.debug('%s verified by %s' % (relName, release['payload']['link_href']))
                     return True
         return False
 
