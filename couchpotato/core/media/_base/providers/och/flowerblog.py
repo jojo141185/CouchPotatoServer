@@ -164,7 +164,7 @@ class Base(OCHProvider):
     def parseHeader(self, header):
         res = {}
         res['name'] = []
-        res['name'] = header.h2.a.text.split('-')[0]
+        res['name'] = header.h2.a.text
         return res
 
 
@@ -185,7 +185,6 @@ class Base(OCHProvider):
             except TypeError:
                 #ignore release if content,header or subHeader couldn't be parsed correctly
                 return
-            res['name'] = res['name']+'.'+res['year'] #adding year to name for better matching
         return res
 
     def parseSearchResult(self, data):

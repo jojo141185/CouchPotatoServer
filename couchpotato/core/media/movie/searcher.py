@@ -314,6 +314,10 @@ class MovieSearcher(SearcherBase, MovieTypeBase):
         if getImdb(nzb.get('description', '')) == getIdentifier(media):
             return True
 
+        #Check if xrel available
+        if fireEvent('movie.verify', nzb['name'], media['info']['imdb']) == True:
+            return True
+
         for raw_title in media['info']['titles']:
             for movie_title in possibleTitles(raw_title):
                 movie_words = re.split('\W+', simplifyString(movie_title))
