@@ -315,7 +315,7 @@ class MovieSearcher(SearcherBase, MovieTypeBase):
             return True
 
         #Check if xrel available
-        if fireEvent('movie.verify', nzb['name'], media['info']['imdb']) == True:
+        if fireEvent('movie.verify', nzb['name'], media['info']['imdb'], single = True):
             return True
 
         for raw_title in media['info']['titles']:
