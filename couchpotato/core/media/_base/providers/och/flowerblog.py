@@ -46,7 +46,10 @@ class Base(OCHProvider):
             result = self.parseMovieDetailPage(data)
             if result:
                 result['id'] = 0
-                results.append(result)
+                for url in json.loads(result['url']):
+                    r = result.copy()   #each mirror to a separate result
+                    r['url'] = json.dumps([url])
+                    results.append(r)
         return len(linksToMovieDetails)
 
 
