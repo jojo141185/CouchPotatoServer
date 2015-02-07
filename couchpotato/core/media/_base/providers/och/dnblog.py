@@ -32,9 +32,12 @@ class Base(OCHProvider):
 
 
     def do_search(self, title, results):
-        foundRel = 0
+        foundRel = False
+        checkedRel = 0
         page = 1
-        while foundRel<51:
+
+        # don't search on further pages when Release has been found
+        while not foundRel:
             log.debug('fetching data from %s' % (self.urls['hd-movies'] % page))
             data = self.getHTMLData(self.urls['hd-movies'] % page)
             dom = BeautifulSoup(data, "html5lib")
@@ -42,11 +45,13 @@ class Base(OCHProvider):
 
             checkWord = max(simplifyString(title).split(), key=len)
             for rel in releaseList.findAll('li'):
-                if checkWord in rel.a.text.lower():
+                #stop immediately when 50 releases checked
+                if checkedRel < 50 and checkWord in rel.a.text.lower():
+                    checkedRel += 1
                     rel =self.parseMovieDetailPage(rel.a['href'])
                     if rel:
                         results.append(rel)
-                        foundRel += 1
+                        foundRel = True
             page += 1
         return foundRel
 
