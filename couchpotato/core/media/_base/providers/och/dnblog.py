@@ -37,7 +37,7 @@ class Base(OCHProvider):
         page = 1
 
         # don't search on further pages when Release has been found
-        while not foundRel:
+        while not foundRel and page < 5:
             log.debug('fetching data from %s' % (self.urls['hd-movies'] % page))
             data = self.getHTMLData(self.urls['hd-movies'] % page)
             dom = BeautifulSoup(data, "html5lib")
