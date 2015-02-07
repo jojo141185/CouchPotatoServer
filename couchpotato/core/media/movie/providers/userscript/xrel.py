@@ -18,16 +18,31 @@ class xrelApi(MovieProvider):
         addEvent('movie.verify', self.verify, priority = 1)
 
     def verify(self, relName, id):
-        release = self.getInfo(relName)
+        relName = relName.replace(' ', '.')
+
+        # Check for Scene Release
+        release = self.getSceneInfo(relName)
         if release != None:
-            for uri in release['payload']['ext_info']['uris']:
-                if 'imdb' in uri and id == uri.split(':')[1]:
-                    log.debug('%s verified by %s' % (relName, release['payload']['link_href']))
-                    return True
+            return self.compareUri(id, release)
+
+        # Check for p2p Release
+        release = self.getP2pInfo(relName)
+        if release != None:
+            return self.compareUri(id, release)
+
         return False
 
-    def getInfo(self, relName):
-        return self.request('info', {'dirname': relName})
+    def compareUri(self, checkUri, FoundRelease):
+        for uri in FoundRelease['payload']['ext_info']['uris']:
+            if 'imdb' in uri and checkUri == uri.split(':')[1]:
+                log.debug('%s verified by %s' % (checkUri, FoundRelease['payload']['link_href']))
+                return True
+
+    def getP2pInfo(self, relName):
+        return self.request('p2p/rls_info', {'dirname': relName})
+
+    def getSceneInfo(self, relName):
+        return self.request('release/info', {'dirname': relName})
 
     def request(self, call = '', params = {}, return_key = None):
 
@@ -35,7 +50,7 @@ class xrelApi(MovieProvider):
         params = tryUrlencode(params)
 
         try:
-            url = 'http://api.xrel.to/api/release/%s.json?%s' % (call, '%s&' % params if params else '')
+            url = 'http://api.xrel.to/api/%s.json?%s' % (call, '%s&' % params if params else '')
             data = self.getJsonData(url, show_error = False)
         except:
             log.debug('Movie not found: %s, %s', (call, params))
