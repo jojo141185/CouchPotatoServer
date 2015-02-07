@@ -82,9 +82,11 @@ class Base(OCHProvider):
                             if acceptedHoster in hoster.lower() and url not in res["url"]:
                                 res["url"].append(url.strip())
                                 log.debug('Found new DL-Link %s on Hoster %s' % (url, hoster))
+                                break
                             if self.conf('extra_hosters') and 'z.b. mc,' in hoster.lower() and url not in res["url"]:
                                 res["url"].append(url.strip())
                                 log.debug('Found new DL-Link %s on non-specified Hoster %s' % (url, hoster))
+                                break
                     except (AttributeError, TypeError):
                         log.debug('Could not fetch URL or hoster from details website.')
 
