@@ -32,9 +32,9 @@ class Base(OCHProvider):
 
 
     def do_search(self, title, results):
-        foundRel = False
+        foundRel = 0
         page = 1
-        while not foundRel:
+        while foundRel<51:
             log.debug('fetching data from %s' % (self.urls['hd-movies'] % page))
             data = self.getHTMLData(self.urls['hd-movies'] % page)
             dom = BeautifulSoup(data, "html5lib")
@@ -46,7 +46,7 @@ class Base(OCHProvider):
                     rel =self.parseMovieDetailPage(rel.a['href'])
                     if rel:
                         results.append(rel)
-                        foundRel = True
+                        foundRel += 1
             page += 1
         return foundRel
 
@@ -77,6 +77,9 @@ class Base(OCHProvider):
                             if acceptedHoster in hoster.lower() and url not in res["url"]:
                                 res["url"].append(url)
                                 log.debug('Found new DL-Link %s on Hoster %s' % (url, hoster))
+                            if self.conf('extra_hosters') and 'z.b. mc,' in hoster.lower() and url not in res["url"]:
+                                res["url"].append(url)
+                                log.debug('Found new DL-Link %s on non-specified Hoster %s' % (url, hoster))
                     except (AttributeError, TypeError):
                         log.debug('Could not fetch URL or hoster from details website.')
 
@@ -162,6 +165,12 @@ config = [{
                               'default': '',
                               'placeholder': 'Example: uploaded,share-online',
                               'description': 'List of Hosters separated by ",". Should be at least one!'
+                          },
+                          {
+                              'name':'extra_hosters',
+                              'default': 0,
+                              'type': 'bool',
+                              'description': 'Accepting non-specified hosters.',
                           },
                       ],
                   },
