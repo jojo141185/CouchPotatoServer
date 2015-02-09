@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import re
-from datetime import date
-import urllib
 import json
-
+from datetime import date
 from bs4 import BeautifulSoup
 
-from couchpotato.core.helpers.encoding import handle_special_chars
 from couchpotato.core.logger import CPLog
 from couchpotato.core.media._base.providers.och.base import OCHProvider
 from couchpotato.core.helpers.variable import tryInt
@@ -30,11 +27,17 @@ class Base(OCHProvider):
         }
 
     def loginSuccess(self, output):
-        dom = BeautifulSoup(output)
-        welcomeString = dom.find('div', attrs={'id': 'news-title'}).text
-        found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
-        if found is not None:
-            return True
+        try:
+            dom = BeautifulSoup(output)
+            log.debug(dom.body.prettify())
+            welcomeString = dom.body.find('div', {'id': 'news-title'}).text
+            found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
+            if found is not None:
+                return True
+        except:
+            log.debug(dom.body.prettify())
+            dom = BeautifulSoup(output, 'html5lib')
+            log.debug(dom.body.find('div', {'id': 'news-title'}).text)
         return False
 
 
