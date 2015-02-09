@@ -11,3 +11,6 @@ class OCHProvider(YarrProvider):
 
     def download(self, url = '', nzb_id = ''):
         return url
+
+    def loginDownload(self, url = '', nzb_id = ''):
+        return url

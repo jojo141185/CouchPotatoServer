@@ -69,6 +69,51 @@ class Base(OCHProvider):
     # ===============================================================================
     # INTERNAL METHODS
     #===============================================================================
+    def parseMovieDetailPage(self, data):
+        dom = BeautifulSoup(data)
+        #content = dom.body.find('div', id='content', recursive=True)
+
+        params = dom.body.find('div', id='item-params', recursive=True)
+        #description = dom.find('div', id='item-description', recursive=False) - unused
+        downloadTab = dom.body.find('div', id='item-user-bar-downloaded', recursive=True)
+
+        try:
+            infoContent = self.parseInfo(params)
+            #descContent = self.parseDesc(description) - unused
+            dlContent = self.parseDl(downloadTab)
+        except:
+            dlContent = {}
+            infoContent = {}
+            log.error("something went wrong when parsing post of release.")
+
+        res = {}
+        res.update(infoContent)
+        res.update(dlContent)
+        return res
+
+    def parseSearchResult(self, data):
+        #print data
+        try:
+            dom = BeautifulSoup(data, "html5lib")
+            content = dom.body.find('div', attrs={'id':'content'}, recursive=True)
+            sections = content.findAll('div', attrs={'id':re.compile('.+-result-title')}, recursive=False)
+
+            #Suche nur auf Kategorien von nox.to beschränken abhaengig von quality
+
+            acceptedSections = ["movie-result-title", "hd-result-title"]
+            linksToMovieDetails = []
+            for section in sections:
+                if section['id'].lower() in acceptedSections:
+                    results = section.findNext('table', attrs={'class': 'result-table-item'})
+                    for result in results.findAll('td', attrs={'class': 'result-table-item-cell'}):
+                        linksToMovieDetails.append(result.a['href'])
+            num_results = len(linksToMovieDetails)
+            log.info('Found %s %s on search.', (num_results, 'release' if num_results == 1 else 'releases'))
+            return linksToMovieDetails
+        except:
+            log.debug('There are no search results to parse!')
+            return []
+
 
     def parseInfo(self, info):
         rows = info.table.findAll('tr')
@@ -138,52 +183,6 @@ class Base(OCHProvider):
                     url.append(link)
 
         return {"url": json.dumps(url)}
-
-    def parseMovieDetailPage(self, data):
-        dom = BeautifulSoup(data)
-        #content = dom.body.find('div', id='content', recursive=True)
-
-        params = dom.body.find('div', id='item-params', recursive=True)
-        #description = dom.find('div', id='item-description', recursive=False) - unused
-        downloadTab = dom.body.find('div', id='item-user-bar-downloaded', recursive=True)
-
-        try:
-            infoContent = self.parseInfo(params)
-            #descContent = self.parseDesc(description) - unused
-            dlContent = self.parseDl(downloadTab)
-        except:
-            dlContent = {}
-            infoContent = {}
-            # :TODO something is wrong here - but usually it works as expected
-            log.error("something went wrong when parsing post of release.")
-
-        res = {}
-        res.update(infoContent)
-        res.update(dlContent)
-        return res
-
-    def parseSearchResult(self, data):
-        #print data
-        try:
-            dom = BeautifulSoup(data, "html5lib")
-            content = dom.body.find('div', attrs={'id':'content'}, recursive=True)
-            sections = content.findAll('div', attrs={'id':re.compile('.+-result-title')}, recursive=False)
-
-            #Suche nur auf Kategorien von nox.to beschränken abhaengig von quality
-
-            acceptedSections = ["movie-result-title", "hd-result-title"]
-            linksToMovieDetails = []
-            for section in sections:
-                if section['id'].lower() in acceptedSections:
-                    results = section.findNext('table', attrs={'class': 'result-table-item'})
-                    for result in results.findAll('td', attrs={'class': 'result-table-item-cell'}):
-                        linksToMovieDetails.append(result.a['href'])
-            num_results = len(linksToMovieDetails)
-            log.info('Found %s %s on search.', (num_results, 'release' if num_results == 1 else 'releases'))
-            return linksToMovieDetails
-        except:
-            log.debug('There are no search results to parse!')
-            return []
 
 
 config = [{
