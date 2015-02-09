@@ -27,17 +27,11 @@ class Base(OCHProvider):
         }
 
     def loginSuccess(self, output):
-        try:
-            dom = BeautifulSoup(output)
-            log.debug(dom.body.prettify())
-            welcomeString = dom.body.find('div', {'id': 'news-title'}).text
-            found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
-            if found is not None:
-                return True
-        except:
-            log.debug(dom.body.prettify())
-            dom = BeautifulSoup(output, 'html5lib')
-            log.debug(dom.body.find('div', {'id': 'news-title'}).text)
+        dom = BeautifulSoup(output)
+        welcomeString = dom.body.find('div', {'id': 'news-title'}).text
+        found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
+        if found is not None:
+            return True
         return False
 
 
