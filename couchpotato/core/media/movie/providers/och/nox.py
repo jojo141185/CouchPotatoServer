@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from couchpotato.core.logger import CPLog
-from couchpotato.core.media._base.providers.och.flowerblog import Base
+from couchpotato.core.media._base.providers.och.nox import Base
 from couchpotato.core.media.movie.providers.base import MovieProvider
 
 log = CPLog(__name__)
 
-autoload = 'flowerblog'
+autoload = 'nox'
 
-class flowerblog(MovieProvider, Base):
+class nox(MovieProvider, Base):
     pass

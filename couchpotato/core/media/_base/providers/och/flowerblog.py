@@ -21,7 +21,7 @@ class Base(OCHProvider):
     }
 
     def _searchOnTitle(self, title, movie, quality, results):
-        #Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
+        # Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
         titles = []
         titles.append(movie['title'])
         titles.append(movie['info']['original_title'])
@@ -36,7 +36,7 @@ class Base(OCHProvider):
 
         log.debug('fetching data from %s' % searchUrl)
 
-        #TODO: Search result has more than one page <vorwaerts> link
+        # TODO: Search result has more than one page <vorwaerts> link
         data = self.getHTMLData(searchUrl)
 
         linksToMovieDetails = self.parseSearchResult(data)
@@ -47,13 +47,13 @@ class Base(OCHProvider):
             if result:
                 result['id'] = 0
                 for url in json.loads(result['url']):
-                    r = result.copy()   #each mirror to a separate result
+                    r = result.copy()  #each mirror to a separate result
                     r['url'] = json.dumps([url])
                     results.append(r)
         return len(linksToMovieDetails)
 
 
-    #===============================================================================
+    # ===============================================================================
     # INTERNAL METHODS
     #===============================================================================
     def parseContent(self, content):
@@ -67,24 +67,25 @@ class Base(OCHProvider):
             try:
                 matches = content.findAll('p', recursive=True)
                 for match in matches:
-                    # DATE
+                    # YEAR
                     keyWords_date = u'(start|release)'
-                    if re.search(keyWords_date, match.text,re.I):
+                    if re.search(keyWords_date, match.text, re.I):
                         try:
-                            regPattern = r".*%s\:\s*(((?P<day>[0-9]{2})\.)?(?P<month>[0-9]{2})\.)?(?P<year>[0-9]{4})" % (keyWords_date)
-                            match_relDate = re.search(regPattern, match.text ,re.I)
+                            regPattern = r".*%s\:\s*(((?P<day>[0-9]{2})\.)?(?P<month>[0-9]{2})\.)?(?P<year>[0-9]{4})" % (
+                                keyWords_date)
+                            match_relDate = re.search(regPattern, match.text, re.I)
                             res["year"] = match_relDate.group('year')
                             log.debug('Found release year of movie: %s' % res["year"])
                         except (AttributeError, TypeError):
                             log.debug('Could not fetch year of movie release from details website.')
                     # SIZE
                     keyWords_size = u'(größe|groeße|groesse|size)'
-                    if re.search(keyWords_size, match.text,re.I):
+                    if re.search(keyWords_size, match.text, re.I):
                         try:
                             regPattern = r".*%s\:\s*(?P<size>[0-9,\.]+)\s?(?P<unit>(TB|GB|MB|kB))" % (keyWords_size)
-                            match_relSize = re.search(regPattern, match.text ,re.I)
-                            res["size"] = match_relSize.group('size')
-                            log.debug('Found size of release: %s %s' % (res['size'], match_relSize.group('unit')) )
+                            match_relSize = re.search(regPattern, match.text, re.I)
+                            res["size"] = match_relSize.group('size') + ' ' + match_relSize.group('unit')
+                            log.debug('Found size of release: %s' % res['size'])
                         except (AttributeError, TypeError):
                             log.debug('Could not fetch size of release from details website.')
 
@@ -104,24 +105,23 @@ class Base(OCHProvider):
                             for acceptedHoster in acceptedHosters.replace(' ', '').split(','):
                                 if acceptedHoster in hoster.lower() and url not in res["url"]:
                                     res["url"].append(url)
-                                    log.debug('Found new DL-Link %s on Hoster %s' % (url, hoster) )
+                                    log.debug('Found new DL-Link %s on Hoster %s' % (url, hoster))
                         except (AttributeError, TypeError):
                             log.debug('Could not fetch URL or hoster from details website.')
 
                     # UNRAR PASSWORD
                     keyWords_pwd = u'(passwort|password)'
-                    if re.search(keyWords_pwd, match.text,re.I):
+                    if re.search(keyWords_pwd, match.text, re.I):
                         try:
                             regPattern = r".*%s\:\s*(?P<pwd>[^\s]+)\s?" % (keyWords_pwd)
-                            match_relSize = re.search(regPattern, match.text ,re.I)
+                            match_relSize = re.search(regPattern, match.text, re.I)
                             res["pwd"] = match_relSize.group('pwd')
-                            log.debug("Found password '%s' to unzip downloaded files." % (res["pwd"]) )
+                            log.debug("Found password '%s' to unzip downloaded files." % (res["pwd"]))
                         except (AttributeError, TypeError):
                             log.debug('Could not fetch password from details website.')
 
             except (AttributeError, TypeError, KeyError):
                 log.error('Could not fetch detailed Release info from Website.')
-
 
             if res["url"] != []:
                 res["url"] = json.dumps(res["url"])  #List 2 string for db-compatibility
@@ -135,28 +135,19 @@ class Base(OCHProvider):
         return None
 
     def parseSubHeader(self, subHeader):
-        # function to calculate age from release date'
-        def _getCentury(year):
-            if len(year) > 2:
-                return year
-            elif tryInt(year[0]) in xrange(3):
-                return '20' + year
-            else:
-                return '19' + year
-
         res = {}
         res["age"] = []
         try:
             categories = subHeader.findAll('a')
             #res["categories"] = []
             #for category in categories:
-                #res["categories"].append(category.text)
+            #res["categories"].append(category.text)
 
             releaseDate = subHeader.text
-            match = re.search(r"[\|]\s+(?P<date>[^\s]*)\s\-\s(?P<time>[^\s]*)\s+",subHeader.text)
+            match = re.search(r"[\|]\s+(?P<date>[^\s]*)\s\-\s(?P<time>[^\s]*)\s+", subHeader.text)
             relDate = match.group('date').split('.')
-            res["age"] = (date.today() - date(tryInt(_getCentury(relDate[2])), tryInt(relDate[1]),
-                          tryInt(relDate[0]))).days
+            res["age"] = (date.today() - date(tryInt(relDate[2]), tryInt(relDate[1]),
+                                              tryInt(relDate[0]))).days
 
         except AttributeError:
             log.error("error parsing subHeader")
