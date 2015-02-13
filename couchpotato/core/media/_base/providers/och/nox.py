@@ -16,7 +16,7 @@ log = CPLog(__name__)
 class Base(OCHProvider):
     urls = {
         'login': 'http://www.nox.to/login',
-        'login_check': 'http://www.nox.to/login',
+        'login_check': 'http://www.nox.to/profile',
         'search': 'http://www.nox.to/suche',
         'download': 'http://www.nox.to/download2?item_id=%s&item_type=%s&captcha_challange='
     }
