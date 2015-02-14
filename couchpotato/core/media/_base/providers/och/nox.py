@@ -26,6 +26,7 @@ class Base(OCHProvider):
                 'password': self.conf('password')
         }
 
+    # checks directly after login with login url
     def loginSuccess(self, output):
         dom = BeautifulSoup(output)
         welcomeString = dom.body.find('div', {'id': 'news-title'}).text
@@ -34,9 +35,16 @@ class Base(OCHProvider):
             return True
         return False
 
-
+    # checks all x minutes if still logged in with login_check url
     def loginCheckSuccess(self, output):
-        return 'failed' not in output.geturl()
+        #return 'failed' not in output.geturl()
+        dom = BeautifulSoup(output)
+        menuBar = dom.body.find('div', {'id':'menubar'})
+        menuItems = menuBar.find('ul', {'id': 'menu-items-static'})
+        found = menuItems.find('a', attrs={'title':re.compile('Ausloggen')})
+        if found is not None:
+            return True
+        return False
 
     def _searchOnTitle(self, title, movie, quality, results):
         # Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
