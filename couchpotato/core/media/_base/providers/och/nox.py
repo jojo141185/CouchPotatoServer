@@ -53,7 +53,8 @@ class Base(OCHProvider):
         titles.append(movie['info']['original_title'])
 
         for title in titles:
-            title = title.replace('-',' ')
+            replace = re.compile(r'[^\w\d.!()]', re.LOCALE)
+            title = replace.sub(' ', title)
             self.do_search('%s' % title, results)
 
 
