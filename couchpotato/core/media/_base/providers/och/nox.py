@@ -2,6 +2,7 @@
 
 import re
 import json
+import time
 from datetime import date
 from bs4 import BeautifulSoup
 
@@ -14,6 +15,9 @@ log = CPLog(__name__)
 
 
 class Base(OCHProvider):
+    lastSearchTime = []
+    lastSearchTitle = []
+    lastSearchResult = []
     urls = {
         'login': 'http://www.nox.to/login',
         'login_check': 'http://www.nox.to/profile',
@@ -47,33 +51,43 @@ class Base(OCHProvider):
         return False
 
     def _searchOnTitle(self, title, movie, quality, results):
-        # Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
-        titles = []
-        titles.append(movie['title'])
-        titles.append(movie['info']['original_title'])
+        now = time.time()
+        # only search consecutively for same title after 30 mins
+        if self.lastSearchTitle != movie['title'] or self.lastSearchTime < (now - 1800):
+            self.lastSearchTitle = movie['title']
+            self.lastSearchTime = now
 
-        for title in titles:
-            replace = re.compile(r'[^\w\d.!()]', re.LOCALE)
-            title = replace.sub(' ', title)
-            self.do_search('%s' % title, results)
+            # Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
+            titles = []
+            titles.append(movie['title'])
+            titles.append(movie['info']['original_title'])
+
+            for title in titles:
+                replace = re.compile(r'[^\w\d.!()]', re.LOCALE)
+                title = replace.sub(' ', title)
+                result = self.do_search('%s' % title)
+                results.append(result)
+
+            self.lastSearchResult = result
+        else:
+            results.append(self.lastSearchResult)
 
 
-    def do_search(self, title, results):
+    def do_search(self, title):
         # TODO: Search result has more than one page <vorwaerts> link
         data = self.getHTMLData(self.urls['search'], data={'query': title})
-
+        result = []
         linksToMovieDetails = self.parseSearchResult(data)
         for movieDetailLink in linksToMovieDetails:
             log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
             data = self.getHTMLData('http://www.nox.to/' + movieDetailLink)
-            result = self.parseMovieDetailPage(data)
-            if result:
-                result['id'] = 0
-                for url in json.loads(result['url']):
-                    r = result.copy()  #each mirror to a separate result
-                    r['url'] = json.dumps([url])
-                    results.append(r)
-        return len(linksToMovieDetails)
+            result_raw = self.parseMovieDetailPage(data)
+            if result_raw:
+                result_raw['id'] = 0
+                for url in json.loads(result_raw['url']):
+                    result = result_raw.copy()  #each mirror to a separate result
+                    result['url'] = json.dumps([url])
+        return result
 
     # ===============================================================================
     # INTERNAL METHODS
