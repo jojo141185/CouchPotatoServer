@@ -73,8 +73,8 @@ class Base(OCHProvider):
             # search for all titles in list
             for title in titles:
                 # simplify and clean title string for nox-search engine
-                replace = re.compile(r'[^\w\d.!()]', re.LOCALE)
-                title = replace.sub(' ', title)
+                title = re.sub(r'[:\-\+\|_#.*~]', ' ', title)
+                title = re.sub(r'[\[\{()\}\],;]', '', title)
                 #search for title
                 searchResults = self.do_search('%s' % title)
                 # append to results list (triggers event that surveys release quality)
