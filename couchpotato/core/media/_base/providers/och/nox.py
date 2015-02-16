@@ -15,8 +15,8 @@ log = CPLog(__name__)
 
 
 class Base(OCHProvider):
-    lastSearchTime = []
-    lastSearchTitle = []
+    lastSearchTime = None
+    lastSearchTitle = None
     lastSearchResult = []
     urls = {
         'login': 'http://www.nox.to/login',
@@ -33,50 +33,63 @@ class Base(OCHProvider):
     # checks directly after login with login url
     def loginSuccess(self, output):
         dom = BeautifulSoup(output)
-        welcomeString = dom.body.find('div', {'id': 'news-title'}).text
-        found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
-        if found is not None:
-            return True
+        try:
+            welcomeString = dom.body.find('div', {'id': 'news-title'}).text
+            found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
+            if found is not None:
+                return True
+        except:
+            log.error("Could not login.")
         return False
 
     # checks all x minutes if still logged in with login_check url
     def loginCheckSuccess(self, output):
-        #return 'failed' not in output.geturl()
         dom = BeautifulSoup(output)
         menuBar = dom.body.find('div', {'id':'menubar'})
-        menuItems = menuBar.find('ul', {'id': 'menu-items-static'})
+        menuItems = menuBar.find('ul', {'id':'menu-items-static'})
         found = menuItems.find('a', attrs={'title':re.compile('Ausloggen')})
         if found is not None:
             return True
         return False
 
     def _searchOnTitle(self, title, movie, quality, results):
+        # function gets called for every title in possibleTitles
         now = time.time()
-        # only search consecutively for same title after 30 mins
-        if self.lastSearchTitle != movie['title'] or self.lastSearchTime < (now - 1800):
+
+        # only search consecutively for same title after 15 mins
+        if self.lastSearchTitle != movie['title'] or self.lastSearchTime < (now - 900):
+            # save parameters (title, time and results) for next search
             self.lastSearchTitle = movie['title']
             self.lastSearchTime = now
+            self.lastSearchResult = []
 
-            # Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
+            # build new title list to search for
+            # with original and local(depending on preffered Language Code) title
             titles = []
             titles.append(movie['title'])
             titles.append(movie['info']['original_title'])
 
+            # search for all titles in list
             for title in titles:
+                # simplify and clean title string for nox-search engine
                 replace = re.compile(r'[^\w\d.!()]', re.LOCALE)
                 title = replace.sub(' ', title)
-                result = self.do_search('%s' % title)
-                results.append(result)
-
-            self.lastSearchResult = result
+                #search for title
+                searchResults = self.do_search('%s' % title)
+                # append to results list (triggers event that surveys release quality)
+                for result in searchResults:
+                    results.append(result)  # gets cleared if release not matched
+                    self.lastSearchResult.append(result)
         else:
-            results.append(self.lastSearchResult)
+            # copy back results from previous (identical) search
+            for result in self.lastSearchResult:
+                results.append(result)
 
 
     def do_search(self, title):
-        # TODO: Search result has more than one page <vorwaerts> link
         data = self.getHTMLData(self.urls['search'], data={'query': title})
-        result = []
+        results = []
+        # get links for detail page of each search result
         linksToMovieDetails = self.parseSearchResult(data)
         for movieDetailLink in linksToMovieDetails:
             log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
@@ -87,7 +100,8 @@ class Base(OCHProvider):
                 for url in json.loads(result_raw['url']):
                     result = result_raw.copy()  #each mirror to a separate result
                     result['url'] = json.dumps([url])
-        return result
+                    results.append(result)
+        return results
 
     # ===============================================================================
     # INTERNAL METHODS
