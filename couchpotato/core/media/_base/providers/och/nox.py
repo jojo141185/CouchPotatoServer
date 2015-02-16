@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: iso-8859-1 -*-
 
 import re
 import json
@@ -135,7 +136,7 @@ class Base(OCHProvider):
             content = dom.body.find('div', attrs={'id':'content'}, recursive=True)
             sections = content.findAll('div', attrs={'id':re.compile('.+-result-title')}, recursive=False)
 
-            #Suche nur auf Kategorien von nox.to beschr√§nken abhaengig von quality
+            #Suche nur auf Kategorien von nox.to beschr‰nken abhaengig von quality
 
             acceptedSections = ["movie-result-title", "hd-result-title"]
             linksToMovieDetails = []
@@ -177,7 +178,7 @@ class Base(OCHProvider):
                         log.debug('Found release year of movie: %s' % res["year"])
 
                     # SIZE
-                    keyWords_size = u'(gr√∂√üe:|groe√üe:|groesse:|size:)'
+                    keyWords_size = u'(grˆﬂe:|groeﬂe:|groesse:|size:)'
                     if re.search(keyWords_size, column.b.text, re.I):
                         res['size'] = self.parseSize(column.nextSibling.text)
                         log.debug('Found size of release: %s MB' % res['size'])
