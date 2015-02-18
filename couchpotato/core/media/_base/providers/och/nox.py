@@ -33,7 +33,7 @@ class Base(OCHProvider):
 
     # checks directly after login with login url
     def loginSuccess(self, output):
-        dom = BeautifulSoup(output)
+        dom = BeautifulSoup(output, "html5lib")
         try:
             welcomeString = dom.body.find('div', {'id': 'news-title'}).text
             found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
@@ -45,7 +45,7 @@ class Base(OCHProvider):
 
     # checks all x minutes if still logged in with login_check url
     def loginCheckSuccess(self, output):
-        dom = BeautifulSoup(output)
+        dom = BeautifulSoup(output, "html5lib")
         menuBar = dom.body.find('div', {'id':'menubar'})
         menuItems = menuBar.find('ul', {'id':'menu-items-static'})
         found = menuItems.find('a', attrs={'title':re.compile('Ausloggen')})
