@@ -132,24 +132,30 @@ class Base(OCHProvider):
     def parseSearchResult(self, data):
         #print data
         try:
+            results = []
+            linksToMovieDetails = []
             dom = BeautifulSoup(data, "html5lib")
             content = dom.body.find('div', attrs={'id':'content'}, recursive=True)
             sections = content.findAll('div', attrs={'id':re.compile('.+-result-title')}, recursive=False)
-
-            #Suche nur auf Kategorien von nox.to beschränken abhaengig von quality
-
-            acceptedSections = ["movie-result-title", "hd-result-title"]
-            linksToMovieDetails = []
-            for section in sections:
-                if section['id'].lower() in acceptedSections:
-                    results = section.findNext('table', attrs={'class': 'result-table-item'})
-                    for result in results.findAll('td', attrs={'class': 'result-table-item-cell'}):
-                        linksToMovieDetails.append(result.a['href'])
+            # check if direct landing on detail page (single match)
+            if len(sections) == 0:
+                # Extract links to other qualities of this movie
+                pattern = 'margin-top: \d+px; margin-left: \d+px; text-align: center'
+                results.extend(content.findAll('p', attrs={'style':re.compile(pattern)}, recursive=True))
+            else:
+                #Suche nur auf Kategorien von nox.to beschränken abhaengig von quality
+                acceptedSections = ["movie-result-title", "hd-result-title"]
+                for section in sections:
+                    if section['id'].lower() in acceptedSections:
+                        tblItems = section.findNext('table', attrs={'class': 'result-table-item'})
+                        results.extend(tblItems.findAll('td', attrs={'class': 'result-table-item-cell'}))
+            for result in results:
+                linksToMovieDetails.append(result.a['href'])
             num_results = len(linksToMovieDetails)
             log.info('Found %s %s on search.', (num_results, 'release' if num_results == 1 else 'releases'))
             return linksToMovieDetails
         except:
-            log.debug('There are no search results to parse!')
+            log.debug('Parsing of search results failed!')
             return []
 
 
