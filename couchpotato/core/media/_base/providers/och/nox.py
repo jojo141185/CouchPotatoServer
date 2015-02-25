@@ -16,10 +16,9 @@ log = CPLog(__name__)
 
 
 class Base(OCHProvider):
-    lastSearchTime = None
-    lastSearchTitle = None
-    lastSearchResult = []
+    qualitySearch = False
     urls = {
+        'base_url' : 'http://www.nox.to/',
         'login': 'http://www.nox.to/login',
         'login_check': 'http://www.nox.to/profile',
         'search': 'http://www.nox.to/suche',
@@ -39,53 +38,31 @@ class Base(OCHProvider):
             found = re.search(u'Willkommen\s%s' % self.conf('username'), welcomeString, re.I)
             if found is not None:
                 return True
-        except:
+        except Exception, err:
             log.error("Could not login.")
+            log.error(dom.body.text)
+            raise
         return False
 
     # checks all x minutes if still logged in with login_check url
     def loginCheckSuccess(self, output):
         dom = BeautifulSoup(output, "html5lib")
-        menuBar = dom.body.find('div', {'id':'menubar'})
-        menuItems = menuBar.find('ul', {'id':'menu-items-static'})
-        found = menuItems.find('a', attrs={'title':re.compile('Ausloggen')})
-        if found is not None:
-            return True
+        try:
+            menuBar = dom.body.find('div', {'id':'menubar'})
+            menuItems = menuBar.find('ul', {'id':'menu-items-static'})
+            found = menuItems.find('a', attrs={'title':re.compile('Ausloggen')})
+            if found is not None:
+                return True
+        except Exception, err:
+            log.error("Couldn't check if login was successful.")
+            import traceback; log.error(traceback.format_exc());
         return False
 
+    # function gets called for every title in possibleTitles
     def _searchOnTitle(self, title, movie, quality, results):
-        # function gets called for every title in possibleTitles
-        now = time.time()
-
-        # only search consecutively for same title after 15 mins
-        if self.lastSearchTitle != movie['title'] or self.lastSearchTime < (now - 900):
-            # save parameters (title, time and results) for next search
-            self.lastSearchTitle = movie['title']
-            self.lastSearchTime = now
-            self.lastSearchResult = []
-
-            # build new title list to search for
-            # with original and local(depending on preffered Language Code) title
-            titles = []
-            titles.append(movie['title'])
-            titles.append(movie['info']['original_title'])
-
-            # search for all titles in list
-            for title in titles:
-                # simplify and clean title string for nox-search engine
-                title = re.sub(r'[:\-\+\|_#.*~]', ' ', title)
-                title = re.sub(r'[\[\{()\}\],;]', '', title)
-                #search for title
-                searchResults = self.do_search('%s' % title)
-                # append to results list (triggers event that surveys release quality)
-                for result in searchResults:
-                    results.append(result)  # gets cleared if release not matched
-                    self.lastSearchResult.append(result)
-        else:
-            # copy back results from previous (identical) search
-            for result in self.lastSearchResult:
-                results.append(result)
-
+        #search for title
+        searchResults = self.do_search('%s' % title)
+        return searchResults
 
     def do_search(self, title):
         data = self.getHTMLData(self.urls['search'], data={'query': title})
@@ -94,7 +71,8 @@ class Base(OCHProvider):
         linksToMovieDetails = self.parseSearchResult(data)
         for movieDetailLink in linksToMovieDetails:
             log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
-            data = self.getHTMLData('http://www.nox.to/' + movieDetailLink)
+            movieDetailLink = re.sub(self.urls['base_url'],'',movieDetailLink)
+            data = self.getHTMLData(self.urls['base_url'] + movieDetailLink)
             result_raw = self.parseMovieDetailPage(data)
             if result_raw:
                 result_raw['id'] = 0
@@ -132,28 +110,36 @@ class Base(OCHProvider):
     def parseSearchResult(self, data):
         #print data
         try:
-            results = []
+            urls = []
             linksToMovieDetails = []
             dom = BeautifulSoup(data, "html5lib")
             content = dom.body.find('div', attrs={'id':'content'}, recursive=True)
             sections = content.findAll('div', attrs={'id':re.compile('.+-result-title')}, recursive=False)
+
             # check if direct landing on detail page (single match)
-            if len(sections) == 0:
+            items = content.find('div', attrs={'id':'item-params'}, recursive=True)
+            if items and len(sections) == 0:
+                # add own URL
+                ownUrl = dom.head.find('meta', attrs={'property':'og:url'}, recursive=True)
+                if ownUrl:
+                    urls.append(ownUrl['content'])
                 # Extract links to other qualities of this movie
                 pattern = 'margin-top: \d+px; margin-left: \d+px; text-align: center'
-                results.extend(content.findAll('p', attrs={'style':re.compile(pattern)}, recursive=True))
+                otherLinks = content.findAll('p', attrs={'style':re.compile(pattern)}, recursive=True)
+                for link in otherLinks:
+                    urls.append(link.a['href'])
             else:
                 #Suche nur auf Kategorien von nox.to beschränken abhaengig von quality
                 acceptedSections = ["movie-result-title", "hd-result-title"]
                 for section in sections:
                     if section['id'].lower() in acceptedSections:
                         tblItems = section.findNext('table', attrs={'class': 'result-table-item'})
-                        results.extend(tblItems.findAll('td', attrs={'class': 'result-table-item-cell'}))
-            for result in results:
-                linksToMovieDetails.append(result.a['href'])
-            num_results = len(linksToMovieDetails)
+                        sectLinks = tblItems.findAll('td', attrs={'class': 'result-table-item-cell'})
+                        for link in sectLinks:
+                            urls.append(link.a['href'])
+            num_results = len(urls)
             log.info('Found %s %s on search.', (num_results, 'release' if num_results == 1 else 'releases'))
-            return linksToMovieDetails
+            return urls
         except:
             log.debug('Parsing of search results failed!')
             return []
