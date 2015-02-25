@@ -14,8 +14,9 @@ from bs4 import BeautifulSoup, NavigableString
 
 log = CPLog(__name__)
 
-
 class Base(OCHProvider):
+
+    qualitySearch = True
     urls = {
         'search': 'http://www.flower-blog.org/?s=%s',
     }

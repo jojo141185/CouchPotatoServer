@@ -19,6 +19,8 @@ log = CPLog(__name__)
 special_chars = {u'ä': u'ae',
                  u'ö': u'oe',
                  u'ü': u'ue',
+                 u'ß': u'ss',
+
                  }
 
 
