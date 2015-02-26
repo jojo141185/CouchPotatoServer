@@ -50,7 +50,7 @@ class OCHProvider(YarrProvider):
             results.extend(cachedResults)
             results.extend(newResult)
             if cachedResults:
-                self.getLastSearchResult[title][quality] = [now,results]
+                self.lastSearched[title][quality] = [now,results]
             else:
                 if title in self.lastSearched:
                     self.lastSearched[title].update({quality:[now, results]})
