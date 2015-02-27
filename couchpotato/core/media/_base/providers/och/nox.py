@@ -60,9 +60,15 @@ class Base(OCHProvider):
 
     # function gets called for every title in possibleTitles
     def _searchOnTitle(self, title, movie, quality, results):
-        #search for title
-        searchResults = self.do_search('%s' % title)
-        return searchResults
+        url = "%s?query=%s" % (self.urls['search'], title)
+        if not self.hasAlreadyBeenSearched(url):
+            results = self.do_search(title)
+
+            # add result to search cache
+            self.addLastSearchResult(url,results)
+        else:
+            results = self.lastSearched.get(url, {})
+        return results
 
     def do_search(self, title):
         data = self.getHTMLData(self.urls['search'], data={'query': title})

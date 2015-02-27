@@ -42,47 +42,24 @@ class OCHProvider(YarrProvider):
     def loginDownload(self, url = '', nzb_id = ''):
         return url
 
-    def addLastSearchResult(self, title, quality, newResult):
+    def addLastSearchResult(self, url, newResult):
         now = time.time()
-        results = []
+        results = self.lastSearched.get(url, [])
         try:
-            cachedResults = self.getLastSearchResult(title,quality)
-            results.extend(cachedResults)
             results.extend(newResult)
-            if cachedResults:
-                self.lastSearched[title][quality] = [now,results]
-            else:
-                if title in self.lastSearched:
-                    self.lastSearched[title].update({quality:[now, results]})
-                else:
-                    self.lastSearched.update({title:{quality:[now, results]}})
+            self.lastSearched[url] = [now, results]
         except:
             log.error("Can't add search result to cache.")
 
-    def getLastSearchResult(self, title, quality):
-        try:
-            if title in self.lastSearched and quality in self.lastSearched[title]:
-                lastResult = self.lastSearched[title][quality][1]
-            else:
-                lastResult = []
-            return lastResult
-        except:
-            log.error("Can't get search result from cache. Search again!")
-            return []
-
-    def hasAlreadyBeenSearched(self, title, quality):
+    def hasAlreadyBeenSearched(self, url):
         try:
             now = time.time()
             # clean list from old searches (<900 s)
-            toDelete = []
-            for lastTitle in self.lastSearched:
-                for LastQuality in self.lastSearched[lastTitle]:
-                    if self.lastSearched[lastTitle][LastQuality][0] < (now - self.blockRetrySearch):
-                        toDelete.append([lastTitle, LastQuality])
-            for entry in toDelete:
-                del self.lastSearched[entry[0]][entry[1]]
+            for entry in self.lastSearched:
+                if self.lastSearched[entry][0] < (now - self.blockRetrySearch):
+                    del self.lastSearched[entry]
 
-            if title in self.lastSearched and quality in self.lastSearched[title]:
+            if url in self.lastSearched:
                 return True
             else:
                 return False
@@ -113,13 +90,8 @@ class OCHProvider(YarrProvider):
             if not self.qualitySearch:
                 quality = None
             newResults = []
-            if not self.hasAlreadyBeenSearched(media_title, quality):
-                for title in self.possibleTitles(media_title):
-                    newResults.extend(self._searchOnTitle(title, media, quality, results))
-                    # add result to search cache
-                    self.addLastSearchResult(media_title,quality,newResults)
-            else:
-                newResults = self.getLastSearchResult(media_title,quality)
+            for title in self.possibleTitles(media_title):
+                self._searchOnTitle(title, media, quality, results)
 
             # append to results list (triggers event that surveys release quality)
             for result in newResults:
