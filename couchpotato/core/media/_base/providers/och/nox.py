@@ -16,13 +16,14 @@ log = CPLog(__name__)
 
 
 class Base(OCHProvider):
+
     qualitySearch = False
     urls = {
         'base_url' : 'http://www.nox.to/',
         'login': 'http://www.nox.to/login',
         'login_check': 'http://www.nox.to/profile',
         'search': 'http://www.nox.to/suche',
-        'download': 'http://www.nox.to/download2?item_id=%s&item_type=%s&captcha_challange='
+        'download': u'http://www.nox.to/download2?item_id=%s&item_type=%s&captcha_challange='
     }
 
     def getLoginParams(self):
@@ -39,7 +40,7 @@ class Base(OCHProvider):
             if found is not None:
                 return True
         except Exception, err:
-            log.error("Could not login.")
+            log.error(u"Could not login.")
             log.error(dom.body.text)
             raise
         return False
@@ -54,20 +55,27 @@ class Base(OCHProvider):
             if found is not None:
                 return True
         except Exception, err:
-            log.error("Couldn't check if login was successful.")
+            log.error(u"Couldn't check if login was successful.")
             import traceback; log.error(traceback.format_exc());
         return False
 
     # function gets called for every title in possibleTitles
     def _searchOnTitle(self, title, movie, quality, results):
-        url = "%s?query=%s" % (self.urls['search'], title)
+        newResults = []
+        log.debug(u"Search for '%s'." % title)
+        url = u"%s?query=%s" % (self.urls['search'], title)
         if not self.hasAlreadyBeenSearched(url):
-            results = self.do_search(title)
-
+            newResults = self.do_search(title)
             # add result to search cache
-            self.addLastSearchResult(url,results)
+            self.addLastSearchResult(url,newResults)
         else:
-            results = self.lastSearched.get(url, {})
+            log.debug(u"Already searched for '%s' in the last %d seconds. Get result from cache."
+                      % (title, self.conf('time_cached')))
+            newResults = self.getLastSearchResult(url)
+
+        # append to results list (triggers event that surveys release quality)
+        for result in newResults:
+            results.append(result)  # gets cleared if release not matched
         return results
 
     def do_search(self, title):
@@ -75,17 +83,28 @@ class Base(OCHProvider):
         results = []
         # get links for detail page of each search result
         linksToMovieDetails = self.parseSearchResult(data)
+        num_results = len(linksToMovieDetails)
+        log.info(u"Found %s %s on search for '%s'." %(num_results, 'release' if num_results == 1 else 'releases', title))
         for movieDetailLink in linksToMovieDetails:
-            log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
-            movieDetailLink = re.sub(self.urls['base_url'],'',movieDetailLink)
-            data = self.getHTMLData(self.urls['base_url'] + movieDetailLink)
-            result_raw = self.parseMovieDetailPage(data)
-            if result_raw:
-                result_raw['id'] = 0
-                for url in json.loads(result_raw['url']):
-                    result = result_raw.copy()  #each mirror to a separate result
-                    result['url'] = json.dumps([url])
-                    results.append(result)
+            pattern = self.urls['base_url']+u'|^/'
+            movieDetailLink = re.sub(pattern,'',movieDetailLink)
+            fullMovieDetailLink = self.urls['base_url'] + movieDetailLink
+            if not self.hasAlreadyBeenSearched(fullMovieDetailLink):
+                log.debug(u"fetching data from Movie's detail page %s" % fullMovieDetailLink)
+                data = self.getHTMLData(fullMovieDetailLink)
+                result_raw = self.parseMovieDetailPage(data)
+                if result_raw:
+                    result_raw['id'] = 0
+                    for url in json.loads(result_raw['url']):
+                        result = result_raw.copy()  #each mirror to a separate result
+                        result['url'] = json.dumps([url])
+                        results.append(result)
+                # add result to search cache
+                self.addLastSearchResult(fullMovieDetailLink,results)
+            else:
+                log.debug(u"Detail page already parsed in the last %d seconds. Get result from cache."
+                          % self.conf('time_cached'))
+                results = self.getLastSearchResult(fullMovieDetailLink)
         return results
 
     # ===============================================================================
@@ -106,7 +125,7 @@ class Base(OCHProvider):
         except:
             dlContent = {}
             infoContent = {}
-            log.error("something went wrong when parsing post of release.")
+            log.error(u"something went wrong when parsing post of release.")
 
         res = {}
         res.update(infoContent)
@@ -143,11 +162,9 @@ class Base(OCHProvider):
                         sectLinks = tblItems.findAll('td', attrs={'class': 'result-table-item-cell'})
                         for link in sectLinks:
                             urls.append(link.a['href'])
-            num_results = len(urls)
-            log.info('Found %s %s on search.', (num_results, 'release' if num_results == 1 else 'releases'))
             return urls
         except:
-            log.debug('Parsing of search results failed!')
+            log.debug(u'Parsing of search results failed!')
             return []
 
 
@@ -167,19 +184,19 @@ class Base(OCHProvider):
                         match = re.search(date_Pattern, rawDate, re.I)
                         res['age'] = (date.today() - date(tryInt(match.group('year')), tryInt(match.group('month')),
                                                          tryInt(match.group('day')))).days
-                        log.debug('Found age of release: %s' % res["age"])
+                        log.debug(u'Found age of release: %s' % res["age"])
 
                     # YEAR
                     keyWords_year = u'(jahr|year)'
                     if re.search(keyWords_year, column.b.text, re.I):
                         res['year'] = column.nextSibling.text
-                        log.debug('Found release year of movie: %s' % res["year"])
+                        log.debug(u'Found release year of movie: %s' % res["year"])
 
                     # SIZE
                     keyWords_size = u'(größe:|groeße:|groesse:|size:)'
                     if re.search(keyWords_size, column.b.text, re.I):
                         res['size'] = self.parseSize(column.nextSibling.text)
-                        log.debug('Found size of release: %s MB' % res['size'])
+                        log.debug(u'Found size of release: %s MB' % res['size'])
 
                     # IMDB
                     keyWords_id = u'auf\sIMdb'
@@ -188,19 +205,19 @@ class Base(OCHProvider):
                         url = column.nextSibling.a['href']
                         match = re.search(imdbUrl_pattern, url, re.I)
                         res['description'] = match.group('id')
-                        log.debug('Found imdb-id of release: %s' % res['description'])
+                        log.debug(u'Found imdb-id of release: %s' % res['description'])
 
                     #REL_Name
                     keyWords_name = u'(releasename:)'
                     if re.search(keyWords_name, column.b.text, re.I):
                         res['name'] = column.nextSibling.a['title']
-                        log.debug('Found name of release: %s' % res['name'])
+                        log.debug(u'Found name of release: %s' % res['name'])
                 except AttributeError:
                     pass
 
         for elem in ['year', 'name', 'description', 'size', 'age']:
             if res.get(elem, None) is None:
-                log.debug('Could not fetch %s of movie release from details website.' % elem)
+                log.debug(u'Could not fetch %s of movie release from details website.' % elem)
 
         return res
 
@@ -244,6 +261,14 @@ config = [{
                               'name': 'password',
                               'type': 'password',
                               'description': 'Password for login; Required to avoid captchas.'
+                          },
+                          {
+                              'name': 'time_cached',
+                              'advanced': True,
+                              'label': 'Cache Time',
+                              'type': 'int',
+                              'default': 900,
+                              'description': 'Time in seconds, were search results are cached.',
                           },
                           {
                               'name': 'extra_score',
