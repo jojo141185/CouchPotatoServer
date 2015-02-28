@@ -16,6 +16,7 @@ log = CPLog(__name__)
 
 
 class Base(OCHProvider):
+
     qualitySearch = False
     urls = {
         'base_url' : 'http://www.nox.to/',
@@ -60,14 +61,21 @@ class Base(OCHProvider):
 
     # function gets called for every title in possibleTitles
     def _searchOnTitle(self, title, movie, quality, results):
+        newResults = []
+        log.debug("Search for '%s'." % title)
         url = "%s?query=%s" % (self.urls['search'], title)
         if not self.hasAlreadyBeenSearched(url):
-            results = self.do_search(title)
-
+            newResults = self.do_search(title)
             # add result to search cache
-            self.addLastSearchResult(url,results)
+            self.addLastSearchResult(url,newResults)
         else:
-            results = self.lastSearched.get(url, {})
+            log.debug("Already searched for '%s' in the last %d seconds. Get result from cache."
+                      % (title, self.conf('time_cached')))
+            newResults = self.getLastSearchResult(url)
+
+        # append to results list (triggers event that surveys release quality)
+        for result in newResults:
+            results.append(result)  # gets cleared if release not matched
         return results
 
     def do_search(self, title):
@@ -75,17 +83,28 @@ class Base(OCHProvider):
         results = []
         # get links for detail page of each search result
         linksToMovieDetails = self.parseSearchResult(data)
+        num_results = len(linksToMovieDetails)
+        log.info("Found %s %s on search for '%s'." %(num_results, 'release' if num_results == 1 else 'releases', title))
         for movieDetailLink in linksToMovieDetails:
-            log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
-            movieDetailLink = re.sub(self.urls['base_url'],'',movieDetailLink)
-            data = self.getHTMLData(self.urls['base_url'] + movieDetailLink)
-            result_raw = self.parseMovieDetailPage(data)
-            if result_raw:
-                result_raw['id'] = 0
-                for url in json.loads(result_raw['url']):
-                    result = result_raw.copy()  #each mirror to a separate result
-                    result['url'] = json.dumps([url])
-                    results.append(result)
+            pattern = self.urls['base_url']+u'|^/'
+            movieDetailLink = re.sub(pattern,'',movieDetailLink)
+            fullMovieDetailLink = self.urls['base_url'] + movieDetailLink
+            if not self.hasAlreadyBeenSearched(fullMovieDetailLink):
+                log.debug("fetching data from Movie's detail page %s" % fullMovieDetailLink)
+                data = self.getHTMLData(fullMovieDetailLink)
+                result_raw = self.parseMovieDetailPage(data)
+                if result_raw:
+                    result_raw['id'] = 0
+                    for url in json.loads(result_raw['url']):
+                        result = result_raw.copy()  #each mirror to a separate result
+                        result['url'] = json.dumps([url])
+                        results.append(result)
+                # add result to search cache
+                self.addLastSearchResult(fullMovieDetailLink,results)
+            else:
+                log.debug("Detail page already parsed in the last %d seconds. Get result from cache."
+                          % self.conf('time_cached'))
+                results = self.getLastSearchResult(fullMovieDetailLink)
         return results
 
     # ===============================================================================
@@ -143,8 +162,6 @@ class Base(OCHProvider):
                         sectLinks = tblItems.findAll('td', attrs={'class': 'result-table-item-cell'})
                         for link in sectLinks:
                             urls.append(link.a['href'])
-            num_results = len(urls)
-            log.info('Found %s %s on search.', (num_results, 'release' if num_results == 1 else 'releases'))
             return urls
         except:
             log.debug('Parsing of search results failed!')
@@ -244,6 +261,14 @@ config = [{
                               'name': 'password',
                               'type': 'password',
                               'description': 'Password for login; Required to avoid captchas.'
+                          },
+                          {
+                              'name': 'time_cached',
+                              'advanced': True,
+                              'label': 'Cache Time',
+                              'type': 'int',
+                              'default': 900,
+                              'description': 'Time in seconds, were search results are cached.',
                           },
                           {
                               'name': 'extra_score',
