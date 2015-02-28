@@ -63,7 +63,7 @@ class OCHProvider(YarrProvider):
             log.error(u"Can't get search result for url '%s' from cache." % url)
             return []
 
-    def hasAlreadyBeenSearched(self, url):
+    def cleanCache(self):
         try:
             now = time.time()
             if self.conf('time_cached'):
@@ -71,15 +71,25 @@ class OCHProvider(YarrProvider):
             else:
                 chacheTime = self.chacheTimeDefault
             # clean list from old searches (Default >900 s)
-            for entry in self.lastSearched:
-                if self.lastSearched[entry][0] < (now - chacheTime):
-                    del self.lastSearched[entry]
+            toDelete = []
+            for lastTitle in self.lastSearched:
+                if self.lastSearched[lastTitle][0] < (now - chacheTime):
+                    toDelete.append(lastTitle)
+            for entry in toDelete:
+                del self.lastSearched[entry]
+        except:
+            log.error(u"Could not clean cache from old search results.")
+
+
+    def hasAlreadyBeenSearched(self, url):
+        try:
+            self.cleanCache()
             if url in self.lastSearched:
                 return True
             else:
                 return False
         except:
-            log.error(u"Could not evaluate search from cache.")
+            log.error(u"Could not evaluate if url '%s' is in cache of search results." % url)
         return False
 
     def search(self, media, quality):
