@@ -85,8 +85,8 @@ class Base(OCHProvider):
                         try:
                             regPattern = r".*%s\:\s*(?P<size>[0-9,\.]+)\s?(?P<unit>(TB|GB|MB|kB))" % (keyWords_size)
                             match_relSize = re.search(regPattern, match.text, re.I)
-                            res["size"] = match_relSize.group('size') + ' ' + match_relSize.group('unit')
-                            log.debug('Found size of release: %s' % res['size'])
+                            res["size"] = self.parseSize(match_relSize.group('size') + ' ' + match_relSize.group('unit'))
+                            log.debug(u'Found size of release: %s MB' % res['size'])
                         except (AttributeError, TypeError):
                             log.debug('Could not fetch size of release from details website.')
 
@@ -133,7 +133,6 @@ class Base(OCHProvider):
 
         except (AttributeError, TypeError, KeyError):
             return None
-        return None
 
     def parseSubHeader(self, subHeader):
         res = {}
