@@ -19,25 +19,28 @@ class Base(OCHProvider):
         'search': 'http://hd-world.org/index.php?s=%s',
     }
 
+    # function gets called for every title in possibleTitles
     def _searchOnTitle(self, title, movie, quality, results):
-        #Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
-        alt_titles = movie['info'].get('alternate_titles', [])
-        titles = []
-        titles.extend(alt_titles);
-        titles.append(title)
-        for title in titles:
-            self.do_search(simplifyString(handle_special_chars(title)), results)
-        if not results:
-            shortenedAltTitles = []
-            # trying to delete original title string from alt title string
-            for alt_title in alt_titles:
-                if alt_title != title and title in alt_title:
-                    shortenedAltTitle = simplifyString(alt_title).replace(simplifyString(title), "")
-                    if shortenedAltTitle != "":
-                        self.do_search(shortenedAltTitle, results)
+        newResults = []
+        log.debug(u"Search for '%s'." % title)
+        url = u"%s?query=%s" % (self.urls['search'], title)
+        if not self.hasAlreadyBeenSearched(url):
+            newResults = self.do_search(title)
+            # add result to search cache
+            self.addLastSearchResult(url,newResults)
+        else:
+            log.debug(u"Already searched for '%s' in the last %d seconds. Get result from cache."
+                      % (title, self.conf('time_cached')))
+            newResults = self.getLastSearchResult(url)
+
+        # append to results list (triggers event that surveys release quality)
+        for result in newResults:
+            results.append(result)  # gets cleared if release not matched
+        return results
 
 
-    def do_search(self, title, results):
+    def do_search(self, title):
+        results = []
         query = '%s' % (urllib.quote_plus(title))
         searchUrl = self.urls['search'] % query
 
@@ -53,7 +56,7 @@ class Base(OCHProvider):
             result = self.parseMovieDetailPage(data)
             if len(result):
                 results.append(result)
-        return len(linksToMovieDetails)
+        return results
 
 
     #===============================================================================
@@ -62,7 +65,7 @@ class Base(OCHProvider):
 
     def parseInfo(self, info):
         def _getDateObject(day, month, year):
-            months = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"]
+            months = [u"januar", u"februar", u"märz", u"april", u"mai", u"juni", u"juli", u"august", u"september", u"oktober", u"november", u"dezember"]
             try:
                 month = months.index(month.lower()) + 1
                 return datetime.date(tryInt(year), month, tryInt(day))
