@@ -14,6 +14,7 @@ class OCHProvider(YarrProvider):
     protocol = 'och'
     lastSearched = {}       # Dictionary of last searches {URL:[TIME:RESULTS]}
     chacheTimeDefault = 900 # Seconds, block search for same title and quality
+    http_time_between_calls = 3  # Seconds between http calls
 
     # TODO: set an attribute to specify the main language of this provider. So in a multi-language environment this provider will only be used if the user is searching for this movie language.
 
