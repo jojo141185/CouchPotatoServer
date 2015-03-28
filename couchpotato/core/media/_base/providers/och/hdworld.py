@@ -175,6 +175,14 @@ config = [{
                               'type': 'enabler',
                           },
                           {
+                              'name': 'time_cached',
+                              'advanced': True,
+                              'label': 'Cache Time',
+                              'type': 'int',
+                              'default': 900,
+                              'description': 'Time in seconds, were search results are cached.',
+                          },
+                          {
                               'name': 'extra_score',
                               'advanced': True,
                               'label': 'Extra Score',
