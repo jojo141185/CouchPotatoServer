@@ -180,6 +180,14 @@ config = [{
                               'description': 'Starting score for each release found via this provider.',
                           },
                           {
+                              'name': 'time_cached',
+                              'advanced': True,
+                              'label': 'Cache Time',
+                              'type': 'int',
+                              'default': 900,
+                              'description': 'Time in seconds, were search results are cached.',
+                          },
+                          {
                               'name': 'hosters',
                               'label': 'accepted Hosters',
                               'default': '',
