@@ -145,7 +145,7 @@ class Base(OCHProvider):
                 #SIZE
                 keyWords_size = u'(größe:|groeße:|groesse:|size:)'
                 if re.search(keyWords_size, sibling.text, re.I):
-                    res['size'] = self.parseSize(sibling.nextSibling)
+                    res['size'] = self.parseSize(sibling.nextSibling.replace(",", "."))
                     log.debug(u'Found size of release: %s MB' % res['size'])
 
                  # IMDB
