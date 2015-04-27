@@ -150,7 +150,7 @@ class Base(OCHProvider):
 
                  # IMDB
                 keyWords_id = u'IMDb'
-                imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/'
+                imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/?'
                 if re.search(keyWords_id, sibling.text, re.I):
                     url = sibling['href']
                     match = re.search(imdbUrl_pattern, url, re.I)
