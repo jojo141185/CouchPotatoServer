@@ -171,8 +171,8 @@ class Base(OCHProvider):
                     except:
                         # TODO: Maybe we could also handle some malformed downloadLinks
                         pass
-
-        return {"url": json.dumps(dlLinks)}
+        res['url'] = json.dumps(dlLinks)
+        return res
 
 config = [{
               'name': 'movieblog',
