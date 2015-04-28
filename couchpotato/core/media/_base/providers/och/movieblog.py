@@ -80,6 +80,8 @@ class Base(OCHProvider):
         res['name'] = titleObject.a.span.text
         res['id'] = titleObject['id'].split('-')[1]
         log.debug(u'Found title of release: %s' % res['name'])
+        if res['name'] == "Die.Pinguine.aus.Madagascar.2014.German.1080p.DL.DTS.BluRay.AVC.Remux-pmHD":
+            pass
 
         try:
             infoContent = self.parseInfo(content.find('div', id='info').p)
@@ -159,19 +161,21 @@ class Base(OCHProvider):
                     log.debug(u'Found imdb-id of release: %s' % res['description'])
 
                 # DOWNLOAD
-                keyWords_dl = u'(download|mirror)(\s#[1-9])?:'
+                keyWords_dl = u'(download|mirror)(\s#?[1-9])?:'
                 if re.search(keyWords_dl, sibling.text, re.I):
+                    hoster = ''
                     try:
                         hoster = sibling.nextSibling.text
                         link = sibling.nextSibling['href']
-
-                        for acceptedHoster in self.conf('hosters').replace(' ', '').split(','):
-                            if acceptedHoster in hoster.lower():
-                                dlLinks.append(link)
-                                log.debug('Found new DL-Link %s on Hoster %s' % (link, hoster))
                     except:
-                        # TODO: Maybe we could also handle some malformed downloadLinks
-                        pass
+                        hoster = sibling.nextSibling.nextSibling.text
+                        link = sibling.nextSibling.nextSibling['href']
+
+                    for acceptedHoster in self.conf('hosters').replace(' ', '').split(','):
+                        if acceptedHoster in hoster.lower():
+                            dlLinks.append(link)
+                            log.debug('Found new DL-Link %s on Hoster %s' % (link, hoster))
+
         res['url'] = json.dumps(dlLinks)
         return res
 
