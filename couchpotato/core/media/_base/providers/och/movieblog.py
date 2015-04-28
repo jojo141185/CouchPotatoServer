@@ -165,8 +165,11 @@ class Base(OCHProvider):
                 if re.search(keyWords_id, sibling.text, re.I):
                     url = sibling['href']
                     match = re.search(imdbUrl_pattern, url, re.I)
-                    res['description'] = match.group('id')
-                    log.debug(u'Found imdb-id of release: %s' % res['description'])
+                    try:
+                        res['description'] = match.group('id')
+                        log.debug(u'Found imdb-id of release: %s' % res['description'])
+                    except:
+                        log.debug(u'Could not parse imdb-id %s' % url)
 
                 # DOWNLOAD
                 keyWords_dl = u'(download|mirror)(\s#?[1-9])?:'
