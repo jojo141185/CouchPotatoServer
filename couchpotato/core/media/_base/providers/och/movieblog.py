@@ -79,6 +79,7 @@ class Base(OCHProvider):
         titleObject = content.find('h1', recursive=True)
         res['name'] = titleObject.a.span.text
         res['id'] = titleObject['id'].split('-')[1]
+        log.debug(u'Found title of release: %s' % res['name'])
 
         try:
             infoContent = self.parseInfo(content.find('div', id='info').p)
