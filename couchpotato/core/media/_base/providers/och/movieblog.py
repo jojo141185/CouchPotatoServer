@@ -46,7 +46,7 @@ class Base(OCHProvider):
         data = self.getHTMLData(self.urls['search'], data={'s': title})
         results = []
         # get links for detail page of each search result
-        linksToMovieDetails = self.parseSearchResult(data)
+        linksToMovieDetails = self.parseSearchResult(data, title)
         num_results = len(linksToMovieDetails)
         log.info(u"Found %s %s on search for '%s'." %(num_results, 'release' if num_results == 1 else 'releases', title))
         for movieDetailLink in linksToMovieDetails:
@@ -80,8 +80,6 @@ class Base(OCHProvider):
         res['name'] = titleObject.a.span.text
         res['id'] = titleObject['id'].split('-')[1]
         log.debug(u'Found title of release: %s' % res['name'])
-        if res['name'] == "Die.Pinguine.aus.Madagascar.2014.German.1080p.DL.DTS.BluRay.AVC.Remux-pmHD":
-            pass
 
         try:
             infoContent = self.parseInfo(content.find('div', id='info').p)
@@ -96,18 +94,28 @@ class Base(OCHProvider):
         res.update(dlContent)
         return res
 
-    def parseSearchResult(self, data):
-        #print data
+    def getNextPage(self, data):
+        pagenavi = data.find('div', attrs={'class': 'wp-pagenavi'}, recursive=True)
+        if pagenavi and (pagenavi.findAll()[-1].attrs['class'][0] != 'current'):
+            currentPageLink = pagenavi.find('span', attrs={'class': 'current'})
+            return currentPageLink.nextSibling['href']
+        else:
+            return None
+
+    def parseSearchResult(self, data, title, linksToMovieDetails = []):
         try:
-            urls = []
-            linksToMovieDetails = []
             dom = BeautifulSoup(data, "html5lib")
             content = dom.body.find('div', attrs={'id':'archiv'}, recursive=True)
             moviePosts = content.findAll('div', attrs={'class':'post'}, recursive=False)
             for moviePost in moviePosts:
                 linksToMovieDetails.append(moviePost.h1.a['href'])
 
-            return linksToMovieDetails
+            linkToNextPage = self.getNextPage(content)
+            if linkToNextPage:
+                return self.parseSearchResult(self.getHTMLData(linkToNextPage, data={'s': title}), title, linksToMovieDetails)
+            else:
+                return linksToMovieDetails
+
         except:
             log.debug(u'Parsing of search results failed!')
             return []
