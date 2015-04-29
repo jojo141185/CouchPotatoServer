@@ -46,7 +46,7 @@ class Base(OCHProvider):
         data = self.getHTMLData(self.urls['search'], data={'s': title})
         results = []
         # get links for detail page of each search result
-        linksToMovieDetails = self.parseSearchResult(data, title)
+        linksToMovieDetails = self.parseSearchResult(data, title, [])
         num_results = len(linksToMovieDetails)
         log.info(u"Found %s %s on search for '%s'." %(num_results, 'release' if num_results == 1 else 'releases', title))
         for movieDetailLink in linksToMovieDetails:
@@ -102,7 +102,7 @@ class Base(OCHProvider):
         else:
             return None
 
-    def parseSearchResult(self, data, title, linksToMovieDetails = []):
+    def parseSearchResult(self, data, title, linksToMovieDetails):
         try:
             dom = BeautifulSoup(data, "html5lib")
             content = dom.body.find('div', attrs={'id':'archiv'}, recursive=True)
