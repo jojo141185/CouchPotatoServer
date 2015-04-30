@@ -6,6 +6,7 @@ import json
 import time
 from datetime import date
 from bs4 import BeautifulSoup
+import itertools
 
 from couchpotato.core.logger import CPLog
 from couchpotato.core.media._base.providers.och.base import OCHProvider
@@ -151,41 +152,46 @@ class Base(OCHProvider):
         # take the cover image as reference for finding next elements
         anchor = post.find('img', recursive=True)
 
-        for sibling in anchor.next_siblings:
-            if getattr(sibling, 'text', False): # checks if text existent
-                #SIZE
-                keyWords_size = u'(größe:|groeße:|groesse:|size:)'
-                if re.search(keyWords_size, sibling.text, re.I):
-                    res['size'] = self.parseSize(sibling.nextSibling.replace(",", "."))
-                    log.debug(u'Found size of release: %s MB' % res['size'])
+        for paragraph in itertools.chain([anchor.parent], anchor.parent.next_siblings):
+            if getattr(paragraph, 'text', False):
+                for sibling in paragraph.children:
+                    if getattr(sibling, 'text', False): # checks if text existent
+                        #SIZE
+                        keyWords_size = u'(größe:|groeße:|groesse:|size:)'
+                        if re.search(keyWords_size, sibling.text, re.I):
+                            res['size'] = self.parseSize(sibling.nextSibling.replace(",", "."))
+                            log.debug(u'Found size of release: %s MB' % res['size'])
 
-                 # IMDB
-                keyWords_id = u'IMDb'
-                imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/?'
-                if re.search(keyWords_id, sibling.text, re.I):
-                    url = sibling['href']
-                    match = re.search(imdbUrl_pattern, url, re.I)
-                    try:
-                        res['description'] = match.group('id')
-                        log.debug(u'Found imdb-id of release: %s' % res['description'])
-                    except:
-                        log.debug(u'Could not parse imdb-id %s' % url)
+                         # IMDB
+                        keyWords_id = u'IMDb'
+                        imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/?'
+                        if re.search(keyWords_id, sibling.text, re.I):
+                            url = sibling['href']
+                            match = re.search(imdbUrl_pattern, url, re.I)
+                            try:
+                                res['description'] = match.group('id')
+                                log.debug(u'Found imdb-id of release: %s' % res['description'])
+                            except:
+                                log.debug(u'Could not parse imdb-id %s' % url)
 
-                # DOWNLOAD
-                keyWords_dl = u'(download|mirror)(\s#?[1-9])?:'
-                if re.search(keyWords_dl, sibling.text, re.I):
-                    hoster = ''
-                    try:
-                        hoster = sibling.nextSibling.text
-                        link = sibling.nextSibling['href']
-                    except:
-                        hoster = sibling.nextSibling.nextSibling.text
-                        link = sibling.nextSibling.nextSibling['href']
+                        # DOWNLOAD
+                        keyWords_dl = u'(download|mirror)(\s#?[1-9])?:'
+                        if re.search(keyWords_dl, sibling.text, re.I):
+                            hoster = ''
+                            try:
+                                hoster = sibling.nextSibling.text
+                                link = sibling.nextSibling['href']
+                            except:
+                                try:
+                                    hoster = sibling.nextSibling.nextSibling.text
+                                    link = sibling.nextSibling.nextSibling['href']
+                                except:
+                                    pass
 
-                    for acceptedHoster in self.conf('hosters').replace(' ', '').split(','):
-                        if acceptedHoster in hoster.lower():
-                            dlLinks.append(link)
-                            log.debug('Found new DL-Link %s on Hoster %s' % (link, hoster))
+                            for acceptedHoster in self.conf('hosters').replace(' ', '').split(','):
+                                if acceptedHoster in hoster.lower():
+                                    dlLinks.append(link)
+                                    log.debug('Found new DL-Link %s on Hoster %s' % (link, hoster))
 
         res['url'] = json.dumps(dlLinks)
         return res
