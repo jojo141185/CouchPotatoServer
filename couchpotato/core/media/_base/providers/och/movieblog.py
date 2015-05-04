@@ -83,8 +83,8 @@ class Base(OCHProvider):
         log.debug(u'Found title of release: %s' % res['name'])
 
         try:
-            infoContent = self.parseInfo(content.find('div', id='info').p)
-            dlContent = self.parseDl(content.find('div', attrs={'class':'eintrag2'}))
+            infoContent = self._parseDateUploaded(content.find('div', id='info').p)
+            dlContent = self._parseEntry(content.find('div', attrs={'class':'eintrag2'}))
         except:
             dlContent = {}
             infoContent = {}
@@ -122,7 +122,7 @@ class Base(OCHProvider):
             return []
 
 
-    def parseInfo(self, info):
+    def _parseDateUploaded(self, info):
         def _getMonth(month):
             months = [u"januar", u"februar", u"märz", u"april", u"mai", u"juni", u"juli", u"august", u"september", u"oktober", u"november", u"dezember"]
             try:
@@ -146,7 +146,7 @@ class Base(OCHProvider):
 
         return res
 
-    def parseDl(self, post):
+    def _parseEntry(self, post):
         res = {}
         dlLinks = []
         # take the cover image as reference for finding next elements
