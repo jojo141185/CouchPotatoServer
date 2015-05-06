@@ -166,7 +166,10 @@ class Base(OCHProvider):
                         keyWords_id = u'IMDb'
                         imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/?'
                         if re.search(keyWords_id, sibling.text, re.I):
-                            url = sibling['href']
+                            try:
+                                url = sibling['href']
+                            except KeyError:
+                                url = sibling.nextSibling['href']
                             match = re.search(imdbUrl_pattern, url, re.I)
                             try:
                                 res['description'] = match.group('id')
