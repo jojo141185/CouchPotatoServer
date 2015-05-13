@@ -147,6 +147,11 @@ class Base(OCHProvider):
         return res
 
     def _parseEntry(self, post):
+        def recursiveSearch(sibling):
+            try:
+                return sibling['href']
+            except (KeyError,TypeError):
+                return None
         res = {}
         dlLinks = []
         # take the cover image as reference for finding next elements
@@ -166,10 +171,12 @@ class Base(OCHProvider):
                         keyWords_id = u'IMDb'
                         imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/?'
                         if re.search(keyWords_id, sibling.text, re.I):
-                            try:
-                                url = sibling['href']
-                            except KeyError:
-                                url = sibling.nextSibling['href']
+                            i = 0
+                            url = recursiveSearch(sibling)
+                            while not url and i < 5:
+                                sibling = sibling.nextSibling
+                                url = recursiveSearch(sibling)
+                                i+=1
                             match = re.search(imdbUrl_pattern, url, re.I)
                             try:
                                 res['description'] = match.group('id')
@@ -180,16 +187,14 @@ class Base(OCHProvider):
                         # DOWNLOAD
                         keyWords_dl = u'(download|mirror)(\s#?[1-9])?:'
                         if re.search(keyWords_dl, sibling.text, re.I):
-                            hoster = ''
-                            try:
-                                hoster = sibling.nextSibling.text
-                                link = sibling.nextSibling['href']
-                            except:
-                                try:
-                                    hoster = sibling.nextSibling.nextSibling.text
-                                    link = sibling.nextSibling.nextSibling['href']
-                                except:
-                                    pass
+                            hoster = None
+                            link = None
+                            i = 0
+                            while not hoster and link and i < 5:
+                                sibling = sibling.nextSibling
+                                link = recursiveSearch(sibling)
+                                i+=1
+                            hoster = sibling.text
 
                             for acceptedHoster in self.conf('hosters').replace(' ', '').split(','):
                                 if acceptedHoster in hoster.lower():
