@@ -441,7 +441,7 @@ class Renamer(Plugin):
                                 extra_type = 'subtitle_extra',
                                 replacements = replacements,
                                 folder_name = folder_name,
-                                file_name = '%s.%s' % (file_name, single_language) if single_language else file_name,
+                                file_name = '%s.%s.%s' % (file_name[:-len(getExt(file_name))], single_language, getExt(file_name)) if single_language else file_name,
                                 destination = destination,
                                 group = group,
                                 current_file = current_file,
