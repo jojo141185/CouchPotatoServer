@@ -424,15 +424,24 @@ class Renamer(Plugin):
 
                             sub_langs = group['subtitle_language'].get(current_file, [])
 
+                            #check if subtitle is forced
+                            forced = False
+                            if 'forced' in current_file:
+                                forced = True
+
                             # rename subtitles with or without language
                             sub_name = self.doReplace(file_name, replacements, remove_multiple = remove_multiple)
                             rename_files[current_file] = os.path.join(destination, final_folder_name, sub_name)
+
+                            single_language = False
+                            if len(sub_langs) == 1:
+                                single_language = '%s-forced' % sub_langs[0] if forced else sub_langs[0]
 
                             rename_extras = self.getRenameExtras(
                                 extra_type = 'subtitle_extra',
                                 replacements = replacements,
                                 folder_name = folder_name,
-                                file_name = file_name,
+                                file_name = '%s.%s' % (file_name, single_language) if single_language else file_name,
                                 destination = destination,
                                 group = group,
                                 current_file = current_file,
@@ -440,8 +449,8 @@ class Renamer(Plugin):
                             )
 
                             # Don't add language if multiple languages in 1 subtitle file
-                            if len(sub_langs) == 1:
-                                sub_suffix = '%s.%s' % (sub_langs[0], replacements['ext'])
+                            if single_language:
+                                sub_suffix = '%s.%s' % (single_language, replacements['ext'])
 
                                 # Don't add language to subtitle file it it's already there
                                 if not sub_name.endswith(sub_suffix):
