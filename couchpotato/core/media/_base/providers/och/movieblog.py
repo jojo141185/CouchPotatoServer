@@ -99,7 +99,8 @@ class Base(OCHProvider):
         pagenavi = data.find('div', attrs={'class': 'wp-pagenavi'}, recursive=True)
         if pagenavi and (pagenavi.findAll()[-1].attrs['class'][0] != 'current'):
             currentPageLink = pagenavi.find('span', attrs={'class': 'current'})
-            return currentPageLink.nextSibling['href']
+            nextPageLink = currentPageLink.nextSibling['href']
+            return nextPageLink if re.match('.+page\/[0-9]{1}\/?',nextPageLink) else None # stop when on page 10
         else:
             return None
 
