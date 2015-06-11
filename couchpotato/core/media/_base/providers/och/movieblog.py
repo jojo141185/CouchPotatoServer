@@ -55,7 +55,7 @@ class Base(OCHProvider):
                 log.debug(u"fetching data from Movie's detail page %s" % movieDetailLink)
                 data = self.getHTMLData(movieDetailLink)
                 result_raw = self.parseMovieDetailPage(data)
-                if result_raw:
+                if result_raw.has_key('url'):
                     for url in json.loads(result_raw['url']):
                         result = result_raw.copy()  #each mirror to a separate result
                         result['url'] = json.dumps([url])
@@ -88,7 +88,7 @@ class Base(OCHProvider):
         except:
             dlContent = {}
             infoContent = {}
-            log.error(u"something went wrong when parsing post of release.")
+            log.error(u"something went wrong when parsing post of release %s." % res['name'])
             import traceback; log.error(traceback.format_exc())
 
         res.update(infoContent)
@@ -100,7 +100,7 @@ class Base(OCHProvider):
         if pagenavi and (pagenavi.findAll()[-1].attrs['class'][0] != 'current'):
             currentPageLink = pagenavi.find('span', attrs={'class': 'current'})
             nextPageLink = currentPageLink.nextSibling['href']
-            return nextPageLink if re.match('.+page\/[0-9]{1}\/?',nextPageLink) else None # stop when on page 10
+            return nextPageLink if re.match('.+page/[0-9]{1}/',nextPageLink) else None # stop when on page 10
         else:
             return None
 
