@@ -18,40 +18,50 @@ class Base(OCHProvider):
 
     qualitySearch = True
     urls = {
-        'search': 'http://www.flower-blog.org/?s=%s',
+        'search': 'http://www.flower-blog.org/',
     }
 
     def _searchOnTitle(self, title, movie, quality, results):
-        # Nach Lokalem Titel (abh. vom def. Laendercode) und original Titel suchen
-        titles = []
-        titles.append(movie['title'])
-        titles.append(movie['info']['original_title'])
+        newResults = []
+        log.debug(u"Search for '%s'." % title)
+        url = u"%s?s=%s" % (self.urls['search'], title)
+        if not self.hasAlreadyBeenSearched(url):
+            newResults = self.do_search(title)
+            # add result to search cache
+            self.addLastSearchResult(url, newResults)
+        else:
+            log.debug(u"Already searched for '%s' in the last %d seconds. Get result from cache."
+                      % (title, self.conf('time_cached')))
+            newResults = self.getLastSearchResult(url)
 
-        for title in titles:
-            self.do_search('%s %s' % (handle_special_chars(title), quality['identifier']), results)
+        # append to results list (triggers event that surveys release quality)
+        for result in newResults:
+            results.append(result)  # gets cleared if release not matched
+        return results
 
-
-    def do_search(self, title, results):
-        query = '%s' % (urllib.quote_plus(title))
-        searchUrl = self.urls['search'] % query
-
-        log.debug('fetching data from %s' % searchUrl)
-
+    def do_search(self, title):
         # TODO: Search result has more than one page <vorwaerts> link
-        data = self.getHTMLData(searchUrl)
-
+        data = self.getHTMLData(self.urls['search'], data={'s': title})
+        results = []
         linksToMovieDetails = self.parseSearchResult(data)
+        num_results = len(linksToMovieDetails)
+        log.info(u"Found %s %s on search for '%s'." %(num_results, 'release' if num_results == 1 else 'releases', title))
         for movieDetailLink in linksToMovieDetails:
-            log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
-            data = self.getHTMLData(movieDetailLink)
-            result = self.parseMovieDetailPage(data)
-            if result:
-                result['id'] = 0
-                for url in json.loads(result['url']):
-                    r = result.copy()  #each mirror to a separate result
-                    r['url'] = json.dumps([url])
-                    results.append(r)
-        return len(linksToMovieDetails)
+            if not self.hasAlreadyBeenSearched(movieDetailLink):
+                log.debug("fetching data from Movie's detail page %s" % movieDetailLink)
+                data = self.getHTMLData(movieDetailLink)
+                result = self.parseMovieDetailPage(data)
+                if result:
+                    result['id'] = 0
+                    for url in json.loads(result['url']):
+                        r = result.copy()  #each mirror to a separate result
+                        r['url'] = json.dumps([url])
+                        results.append(r)
+            else:
+                log.debug(u"Detail page already parsed in the last %d seconds. Get result from cache."
+                          % self.conf('time_cached'))
+                results = self.getLastSearchResult(movieDetailLink)
+        return results
 
 
     # ===============================================================================
@@ -215,6 +225,14 @@ config = [{
                           {
                               'name': 'enabled',
                               'type': 'enabler',
+                          },
+                          {
+                              'name': 'time_cached',
+                              'advanced': True,
+                              'label': 'Cache Time',
+                              'type': 'int',
+                              'default': 900,
+                              'description': 'Time in seconds, were search results are cached.',
                           },
                           {
                               'name': 'extra_score',
