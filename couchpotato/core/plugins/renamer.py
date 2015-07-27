@@ -1456,7 +1456,7 @@ config = [{
                     'default': 'link',
                     'type': 'dropdown',
                     'values': [('Link', 'link'), ('Copy', 'copy'), ('Move', 'move')],
-                    'description': 'See above. It is prefered to use link when downloading torrents as it will save you space, while still beeing able to seed.',
+                    'description': 'See above. It is prefered to use link when downloading torrents as it will save you space, while still being able to seed.',
                     'advanced': True,
                 },
                 {
