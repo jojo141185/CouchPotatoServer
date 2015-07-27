@@ -1,7 +1,9 @@
 import json
 import traceback
-from couchpotato.core._base.downloader.main import DownloaderBase
-from couchpotato.core.helpers.encoding import tryUrlencode
+import os
+import time
+from couchpotato.core._base.downloader.main import DownloaderBase, ReleaseDownloadList
+from couchpotato.core.helpers.encoding import tryUrlencode, sp
 from couchpotato.core.helpers.variable import cleanHost
 from couchpotato.core.logger import CPLog
 from couchpotato.environment import Env
@@ -17,6 +19,17 @@ class jDownloader(DownloaderBase):
     session_id = None
 
     def download(self, data = None, media = None, filedata = None):
+        """ Send a package/links to the downloader
+
+        :param data: dict returned from provider
+            Contains the release information
+        :param media: media dict with information
+            Used for creating the filename when possible
+        :param filedata: downloaded .dlc filedata
+            regularly used for sending dlc files or something else,... until now not supported!
+        :return: boolean
+            One failed returns false, but the downloader should log his own errors
+        """
         if not media: media = {}
         if not data: data = {}
 
@@ -25,24 +38,80 @@ class jDownloader(DownloaderBase):
             links = str([x for x in json.loads(data.get('url'))])
             response = self.call("linkgrabberv2/addLinks",{"links":links,"packageName": jd_packagename , "autostart": True})
 
+            time.sleep(10) # wait 5 seconds for adding links to JD
             packageUUID = self.getUUIDbyPackageName(jd_packagename)
-            return self.downloadReturnId(packageUUID)
-
+            if packageUUID:
+                return self.downloadReturnId(packageUUID)
+            else:
+                return False
         except:
             log.error('Something went wrong sending the jDownloader file: %s', traceback.format_exc())
             return False
 
+    def test(self):
+        """ Check if connection works
+        :return: bool
+        """
+
+        try:
+            r = self.call("help")
+        except:
+            return False
+
+        return True
+
+    def getAllDownloadStatus(self, ids):
+        """ Get status of all active downloads
+
+        :param ids: list of (mixed) downloader ids
+            Used to match the releases for this downloader as there could be
+            other downloaders active that it should ignore
+        :return: list of releases
+        """
+
+        raw_statuses = json.loads(self.call('downloadsV2/queryPackages',{"finished":"true", "status":"true","saveTo":"true"}))
+
+        release_downloads = ReleaseDownloadList(self)
+        for id in ids:
+            packages = raw_statuses.get('data', [])
+            package_ids = [x['uuid'] for x in packages]
+            if id in package_ids:
+                listIndex = package_ids.index(id)
+
+                # Check status
+                status = 'busy'
+                if packages[listIndex].get('finished', False):
+                    status = 'completed'
+                #elif pkg.get('status','') #check for errors
+                #    status = 'failed'
+
+                release_downloads.append({
+                    'id': packages[listIndex]['uuid'],
+                    'name': packages[listIndex]['name'],
+                    'status': status,
+                    'original_status': packages[listIndex].get('status',None),
+                    'timeleft': packages[listIndex].get('eta',-1),
+                    'folder': sp(packages[listIndex]['saveTo']),
+                })
+            else: #id not found in jd - mark as failed
+                release_downloads.append({
+                    'id': id,
+                    'name': '',
+                    'status': 'failed',
+                    'timeleft': -1,
+                    'folder': '',
+            })
+
+        return release_downloads
+
     def getUUIDbyPackageName(self, name):
-        response = self.call("linkgrabberv2/queryPackages")
+        for query in ("linkgrabberv2/queryPackages","downloadsV2/queryPackages"):
+            response = json.loads(self.call(query, {}))
 
-        if name not in response.data:
-            return None
-
-        for data in response.data:
-            if data['name'] == name:
-                return data['uuid']
-
-        return None
+            packageNames = [x['name'] for x in response['data']]
+            for packageName in packageNames:
+                if name == packageName:
+                    return response['data'][packageNames.index(packageName)]['uuid']
 
 
     def call(self, call, parameters = None, is_repeat = False, auth = False, **kwargs):
@@ -70,9 +139,6 @@ class jDownloader(DownloaderBase):
             log.error('Failed to parsing %s: %s', (self.getName(), traceback.format_exc()))
 
         return {}
-
-
-
 
 config = [{
     'name': 'jdownloader',
