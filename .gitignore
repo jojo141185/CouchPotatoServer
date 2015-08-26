@@ -1,9 +1,10 @@
 *.pyc
 /data/
+/_env/
 /_source/
 .project
 .pydevproject
-.idea/
-/.idea
+node_modules
+.tmp
 .idea
 Thumbs.db
