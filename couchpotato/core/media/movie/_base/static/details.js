@@ -10,8 +10,7 @@ var MovieDetails = new Class({
 
 		self.sections = {};
 
-		var category = parent.get('category'),
-			profile = parent.profile;
+		var category = parent.get('category');
 
 		self.el = new Element('div',{
 			'class': 'page active movie_details level_' + (options.level || 0)
@@ -37,9 +36,17 @@ var MovieDetails = new Class({
 			)
 		);
 
-		self.addSection('description', new Element('div', {
-			'text': parent.get('plot')
-		}));
+		var eta_date = parent.getETA('%b %Y') ;
+		self.addSection('description', new Element('div').adopt(
+			new Element('div', {
+				'text': parent.get('plot')
+			}),
+			new Element('div.meta', {
+				'html':
+					(eta_date ? ('<span>ETA:' + eta_date + '</span>') : '') +
+					'<span>' + (parent.get('genres') || []).join(', ') + '</span>'
+			})
+		));
 
 
 		// Title dropdown
@@ -115,6 +122,12 @@ var MovieDetails = new Class({
 			});
 		}
 
+		self.outer_click = function(){
+			self.close();
+		};
+
+		App.addEvent('history.push', self.outer_click)
+
 	},
 
 	close: function(){
@@ -149,6 +162,8 @@ var MovieDetails = new Class({
 		else {
 			self.el.removeClass('show');
 		}
+
+		App.removeEvent('history.push', self.outer_click)
 	}
 
 });

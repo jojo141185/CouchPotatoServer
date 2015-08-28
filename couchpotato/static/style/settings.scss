@@ -1,10 +1,10 @@
 @import "_mixins";
 
 .page.settings {
-	top: $header_height;
+	padding-top: $header_height;
 
 	@include media-phablet {
-		top: $header_width_mobile;
+		padding-top: $header_width_mobile;
 	}
 
 	&.active .scroll_content {
@@ -42,6 +42,10 @@
 		list-style: none;
 		font-size: 24px;
 
+		@include media-phablet {
+			margin: 0 $padding/2 $padding;
+		}
+
 		ul {
 			list-style: none;
 			font-size: $font_size;
@@ -64,20 +68,26 @@
 	form.containers {
 		margin: 0 $padding 0 0;
 		flex: 1 1 auto;
+
+		@include media-phablet {
+			margin: 0 $padding/2 0 0;
+		}
 	}
 
 	fieldset {
 		border: 0;
-		margin-bottom: $padding;
+		padding: $padding/2 0;
 		position: relative;
 
 		h2 {
 			display: flex;
+			flex-flow: row wrap;
 			align-items: baseline;
 			padding: 0 0 0 $padding;
 
 			@include media-phablet {
 				display: block;
+				padding: 0 0 0 $padding/2;
 			}
 
 			.icon {
@@ -90,9 +100,12 @@
 				}
 			}
 
+			.group_label {
+				margin-right: $padding/2;
+			}
+
 			.hint {
 				flex: 1;
-				margin-left: $padding/2;
 				font-size: 1rem;
 
 				@include media-phablet {
@@ -106,6 +119,48 @@
 					text-decoration: underline;
 					display: inline;
 				}
+
+
+			}
+		}
+
+		.more_hint {
+			position: relative;
+
+			.tooltip {
+				display: inline;
+				padding: $padding/2;
+
+				.icon-info {
+					vertical-align: middle;
+					display: inline-block;
+					text-align: center;
+					border: 1px solid $primary_color;
+					border-radius: 50%;
+					width: 18px;
+					height: 18px;
+					line-height: 16px;
+					font-size: .8em;
+					text-decoration: none;
+				}
+
+				.tip {
+					bottom: 100%;
+					left: 0;
+					right: 0;
+					position: absolute;
+					background: $theme_off;
+					z-index: 20;
+					display: none;
+					padding: $padding/2;
+					margin-left: -$padding/2;
+				}
+
+				&:hover {
+					.tip {
+						display: block;
+					}
+				}
 			}
 		}
 
@@ -118,11 +173,15 @@
 
 			@include media-phablet {
 				flex-flow: row wrap;
-				padding-right: 0;
+				padding: $padding/3 0 $padding/3 $padding/2;
 			}
 
 			&:last-child {
 				border-bottom: 0;
+			}
+
+			&:nth-child(2) {
+				margin-top: $padding/2;
 			}
 
 			label {
@@ -226,6 +285,10 @@
 		&.enabler {
 			display: block;
 
+			&.disabled:hover {
+				background: rgba($theme_off, .2);
+			}
+
 			> :first-child {
 				position: absolute;
 				right: 0;
@@ -241,8 +304,12 @@
 				}
 			}
 
+			> :nth-child(2){
+				margin-top: 0;
+			}
+
 			> :nth-child(3){
-				margin-top: $padding;
+				margin-top: $padding/2;
 			}
 
 		}
@@ -310,6 +377,7 @@
 	/** Options list **/
 	.option_list {
 		background: #FFF;
+		margin-top: $padding/2;
 
 		fieldset {
 			position: relative;
@@ -333,7 +401,7 @@
 			display: block;
 			width: 100%;
 			border-bottom: 1px solid $theme_off;
-			bottom: -$padding/2;
+			bottom: 0;
 
 			&:last-child {
 				border-bottom: 0;
@@ -501,6 +569,24 @@
 
 		input {
 			width: 100%;
+		}
+	}
+
+	.multi_directory {
+
+		.delete {
+			color: $primary_color;
+			padding: 0 $padding/2;
+			opacity: .6;
+			font-size: 1.5em;
+
+			&:hover {
+				opacity: 1;
+			}
+		}
+
+		&.is_empty .delete {
+			display: none;
 		}
 	}
 

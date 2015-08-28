@@ -13,6 +13,7 @@ var MovieList = new Class({
 		force_view: false
 	},
 
+	available_views: ['thumb', 'list'],
 	movies: [],
 	movies_added: {},
 	total_movies: 0,
@@ -47,13 +48,9 @@ var MovieList = new Class({
 						(e).stopPropagation();
 						el.retrieve('klass').onMouseenter(e);
 					},
-					'mouseleave:relay(.movie)': function(e, el){
-						(e).stopPropagation();
-						el.retrieve('klass').onMouseleave(e);
-					},
 					'change:relay(.movie input)': function(e, el){
 						(e).stopPropagation();
-						el = el.getParent();
+						el = el.getParent('.movie');
 						var klass = el.retrieve('klass');
 						klass.fireEvent('select');
 						klass.select(klass.select_checkbox.get('checked'));
@@ -152,7 +149,7 @@ var MovieList = new Class({
 		if(!self.navigation_counter) return;
 
 		self.counter_count = count;
-		self.navigation_counter.set('text', (count || 0) + ' movies');
+		self.navigation_counter.set('text', count === 1 ? '1 movie' : (count || 0) + ' movies');
 
 		if (self.empty_message) {
 			self.empty_message.destroy();
@@ -529,6 +526,9 @@ var MovieList = new Class({
 
 	changeView: function(new_view){
 		var self = this;
+
+		if(self.available_views.indexOf(new_view) == -1)
+			new_view = 'thumb';
 
 		self.el
 			.removeClass(self.current_view+'_list')

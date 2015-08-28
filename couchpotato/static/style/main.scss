@@ -40,7 +40,11 @@ input, textarea, select {
 	padding: $padding/3;
 	background: $background_color;
 	border: 1px solid darken($theme_off, 20);
+	border-radius: 0;
+}
 
+input[type=text], textarea {
+	-webkit-appearance: none;
 }
 
 .button {
@@ -381,6 +385,9 @@ input, textarea, select {
 	height: 100%;
 	flex: 1 auto;
 
+	display: flex;
+	flex-flow: column nowrap;
+
 	background: $background_color;
 	border-radius: $border_radius 0 0 $border_radius;
 	//overflow: hidden;
@@ -391,16 +398,12 @@ input, textarea, select {
 	}
 
 	.pages {
-		height: 100%;
+		flex: 1 auto;
 		width: 100%;
-		//overflow: hidden;
 		position: relative;
 	}
 
 	.footer {
-		position: fixed;
-		bottom: 0;
-		height: $padding;
 		width: 100%;
 	}
 }
@@ -440,7 +443,6 @@ input, textarea, select {
 
 		@include media-phablet {
 			font-size: 18px;
-			padding: $padding/2;
 		}
 	}
 
@@ -458,7 +460,8 @@ input, textarea, select {
 
 		@include media-phablet {
 			height: $header_width_mobile;
-			left: $header_width_mobile + $padding;
+			left: $header_width_mobile + $padding/2;
+			right: $padding/2;
 		}
 
 		ul {
@@ -474,11 +477,12 @@ input, textarea, select {
 					line-height: $header_height;
 					padding: 0 $padding;
 					color: rgba(0,0,0,.5);
+					vertical-align: bottom;
 
 					@include media-phablet {
 						font-size: 18px;
 						line-height: $header_width_mobile;
-						padding: $padding/2;
+						padding: 0 $padding/2;
 					}
 				}
 			}
@@ -490,6 +494,10 @@ input, textarea, select {
 
 		> ul > li:first-child {
 			margin-left: -$padding;
+
+			@include media-phablet {
+				margin-left: -$padding/2;
+			}
 		}
 
 		h2 {
