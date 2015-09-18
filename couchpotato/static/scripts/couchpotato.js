@@ -46,6 +46,20 @@
 		window.addEvent('resize', self.resize.bind(self));
 		self.resize();
 
+		self.checkCache();
+
+	},
+
+	checkCache: function(){
+		window.addEventListener('load', function() {
+			window.applicationCache.addEventListener('updateready', function(e) {
+				if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+					window.applicationCache.swapCache();
+					window.location.reload();
+				}
+			}, false);
+
+		}, false);
 	},
 
 	resize: function(){
@@ -69,8 +83,8 @@
 
 		ripple.inject(el);
 
-		setTimeout(function(){ ripple.addClass('animate'); }, 0);
-		setTimeout(function(){ ripple.dispose(); }, 2100);
+		requestTimeout(function(){ ripple.addClass('animate'); }, 0);
+		requestTimeout(function(){ ripple.dispose(); }, 2100);
 	},
 
 	getOption: function(name){
@@ -167,16 +181,11 @@
 			self.block.more.addLink(a);
 		});
 
-
-		new ScrollSpy({
-			min: 10,
-			onLeave: function(){
-				$(self.block.header).removeClass('with_shadow');
-			},
-			onEnter: function(){
-				$(self.block.header).addClass('with_shadow');
-			}
+		// Set theme
+		self.addEvent('setting.save.core.dark_theme', function(enabled){
+			document.html[enabled ? 'addClass' : 'removeClass']('dark');
 		});
+
 	},
 
 	createPages: function(){
@@ -274,7 +283,7 @@
 				'click': function(e){
 					(e).preventDefault();
 					self.shutdown();
-					q.close.delay(100, q);
+					requestTimeout(q.close.bind(q), 100);
 				}
 			}
 		}, {
@@ -301,7 +310,7 @@
 				'click': function(e){
 					(e).preventDefault();
 					self.restart(message, title);
-					q.close.delay(100, q);
+					requestTimeout(q.close.bind(q), 100);
 				}
 			}
 		}, {
@@ -322,10 +331,12 @@
 	checkAvailable: function(delay, onAvailable){
 		var self = this;
 
-		(function(){
+		requestTimeout(function(){
 
 			var onFailure = function(){
-				self.checkAvailable.delay(1000, self, [delay, onAvailable]);
+				requestTimeout(function(){
+					self.checkAvailable(delay, onAvailable);
+				}, 1000);
 				self.fireEvent('unload');
 			};
 
@@ -344,7 +355,7 @@
 				}
 			});
 
-		}).delay(delay || 0);
+		}, delay || 0);
 	},
 
 	blockPage: function(message, title){
@@ -361,7 +372,7 @@
 
 		createSpinner(self.mask);
 
-		setTimeout(function(){
+		requestTimeout(function(){
 			self.mask.addClass('show');
 		}, 10);
 	},
@@ -459,7 +470,7 @@
 		// Create parallel callback
 		self.global_events[name].each(function(handle){
 
-			setTimeout(function(){
+			requestTimeout(function(){
 				var results = handle.apply(handle, args || []);
 
 				if(on_complete)

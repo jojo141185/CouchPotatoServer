@@ -25,8 +25,6 @@ class DownloaderBase(Provider):
     status_support = True
 
     torrent_sources = [
-        'https://zoink.it/torrent/%s.torrent',
-        'http://torrage.com/torrent/%s.torrent',
         'https://torcache.net/torrent/%s.torrent',
     ]
 
@@ -138,7 +136,7 @@ class DownloaderBase(Provider):
 
         for source in sources:
             try:
-                filedata = self.urlopen(source % torrent_hash, headers = {'Referer': ''}, show_error = False)
+                filedata = self.urlopen(source % torrent_hash, headers = {'Referer': source % torrent_hash}, show_error = False)
                 if 'torcache' in filedata and 'file not found' in filedata.lower():
                     continue
 

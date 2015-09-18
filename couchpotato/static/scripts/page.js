@@ -2,10 +2,7 @@ var PageBase = new Class({
 
 	Implements: [Options, Events],
 
-	options: {
-
-	},
-
+	disable_pointer_onscroll: true,
 	order: 1,
 	has_tab: true,
 	name: '',
@@ -28,13 +25,15 @@ var PageBase = new Class({
 		);
 
 		// Stop hover events while scrolling
-		App.addEvent('load', function(){
-			setTimeout(function(){
-				if(!App.mobile_screen && !App.getOption('dev')){
-					self.content.addEvent('scroll', self.preventHover.bind(self));
-				}
-			}, 100);
-		});
+		if(self.options.disable_pointer_onscroll){
+			App.addEvent('load', function(){
+				requestTimeout(function(){
+					if(!App.mobile_screen && !App.getOption('dev')){
+						self.content.addEvent('scroll', self.preventHover.bind(self));
+					}
+				}, 100);
+			});
+		}
 	},
 
 	load: function(){
@@ -165,10 +164,10 @@ var PageBase = new Class({
 	preventHover: function(){
 		var self = this;
 
-		if(self.hover_timer) clearTimeout(self.hover_timer);
+		if(self.hover_timer) clearRequestTimeout(self.hover_timer);
 		self.el.addClass('disable_hover');
 
-		self.hover_timer = setTimeout(function(){
+		self.hover_timer = requestTimeout(function(){
 			self.el.removeClass('disable_hover');
 		}, 200);
 	},

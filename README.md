@@ -38,6 +38,7 @@ Linux:
 * (Fedora / CentOS) Install [GIT](http://git-scm.com/) with `yum install git`
 * Install [LXML](http://lxml.de/installation.html) for better/faster website scraping 
 * 'cd' to the folder of your choosing.
+* Install [PyOpenSSL](https://pypi.python.org/pypi/pyOpenSSL) with `pip install --upgrade pyopenssl`
 * Run `git clone https://github.com/RuudBurger/CouchPotatoServer.git`
 * Then do `python CouchPotatoServer/CouchPotato.py` to start
 * (Ubuntu / Debian) To run on boot copy the init script `sudo cp CouchPotatoServer/init/ubuntu /etc/init.d/couchpotato`
@@ -52,6 +53,9 @@ Linux:
 
 Docker:
 * You can use [linuxserver.io](https://github.com/linuxserver/docker-couchpotato) or [razorgirl's](https://github.com/razorgirl/docker-couchpotato) to quickly build your own isolated app container. It's based on the Linux instructions above. For more info about Docker check out the [official website](https://www.docker.com).
+
+Ansible:
+* You can use [peerster's] (https://github.com/peerster/ansible-couchpotato) [ansible] (http://www.ansible.com) role to deploy couchpotato.
 
 FreeBSD:
 

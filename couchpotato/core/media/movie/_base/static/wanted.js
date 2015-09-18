@@ -4,7 +4,7 @@ var MoviesWanted = new Class({
 
 	order: 10,
 	name: 'wanted',
-	title: 'Gimmy gimmy gimmy!',
+	title: 'Gimme gimme gimme!',
 	folder_browser: null,
 
 	indexAction: function(){
@@ -32,20 +32,22 @@ var MoviesWanted = new Class({
 			self.list = new MovieList({
 				'identifier': 'wanted',
 				'status': 'active',
-				'actions': [MA.IMDB, MA.Release, MA.Trailer, MA.Refresh, MA.Readd, MA.Delete, MA.Category, MA.Profile],
+				'actions': [MA.MarkAsDone, MA.IMDB, MA.Release, MA.Trailer, MA.Refresh, MA.Readd, MA.Delete, MA.Category, MA.Profile],
 				'add_new': true,
 				'menu': [self.manual_search, self.scan_folder],
-				'on_empty_element': new Element('div.empty_wanted').adopt(
-					new Element('div.no_movies', {
-						'text': 'Seems like you don\'t have any movies yet.. Maybe add some via search or the extension.'
-					}),
-					App.createUserscriptButtons()
-				)
+				'on_empty_element': function(){
+					return new Element('div.empty_wanted').adopt(
+						new Element('div.no_movies', {
+							'text': 'Seems like you don\'t have any movies yet.. Maybe add some via search or the extension.'
+						}),
+						App.createUserscriptButtons()
+					);
+				}
 			});
 			$(self.list).inject(self.content);
 
 			// Check if search is in progress
-			self.startProgressInterval.delay(4000, self);
+			requestTimeout(self.startProgressInterval.bind(self), 4000);
 		}
 
 	},
@@ -66,13 +68,13 @@ var MoviesWanted = new Class({
 		var self = this;
 
 		var start_text = self.manual_search.get('text');
-		self.progress_interval = setInterval(function(){
+		self.progress_interval = requestInterval(function(){
 			if(self.search_progress && self.search_progress.running) return;
 			self.search_progress = Api.request('movie.searcher.progress', {
 				'onComplete': function(json){
 					self.search_in_progress = true;
 					if(!json.movie){
-						clearInterval(self.progress_interval);
+						clearRequestInterval(self.progress_interval);
 						self.search_in_progress = false;
 						self.manual_search.set('text', start_text);
 					}

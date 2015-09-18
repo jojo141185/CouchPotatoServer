@@ -2,6 +2,7 @@ Page.Log = new Class({
 
 	Extends: PageBase,
 
+	disable_pointer_onscroll: false,
 	order: 60,
 	name: 'log',
 	title: 'Show recent logs.',
@@ -39,7 +40,9 @@ Page.Log = new Class({
 			'text': 'loading...',
 			'events': {
 				'mouseup:relay(.time)': function(e){
-					self.showSelectionButton.delay(100, self, e);
+					requestTimeout(function(){
+						self.showSelectionButton(e);
+					}, 100);
 				}
 			}
 		}).inject(self.content);
@@ -136,11 +139,8 @@ Page.Log = new Class({
 			elements.include(new Element('div', {
 				'class': 'time ' + log.type.toLowerCase()
 			}).adopt(
-				new Element('span', {
-					'text': log.time
-				}),
-				new Element('span.type', {
-					'text': log.type
+				new Element('span.time_type', {
+					'text': log.time + ' ' + log.type
 				}),
 				new Element('span.message', {
 					'text': log.message
@@ -211,7 +211,7 @@ Page.Log = new Class({
 			}
 		}).inject(document.body);
 
-		setTimeout(function(){
+		requestTimeout(function(){
 			document.body.addEvent('click', remove_button);
 		}, 0);
 

@@ -17,13 +17,9 @@ body, html {
 	height:  100%;
 	margin: 0;
 	padding: 0;
-	background: $menu_color;
+	@include theme(background, menu);
+	@include theme(color, text);
 	overflow: hidden;
-}
-
-body {
-	display: flex;
-	flex-flow: row nowrap;
 }
 
 a {
@@ -32,15 +28,25 @@ a {
 	text-decoration: none;
 	cursor: pointer;
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+
+	&:visited, &:active {
+		color: inherit;
+	}
 }
 
 input, textarea, select {
 	font-size: 1em;
 	font-weight: 300;
 	padding: $padding/3;
-	background: $background_color;
-	border: 1px solid darken($theme_off, 20);
 	border-radius: 0;
+	border: 1px solid darken(get-theme(off), 20);
+
+	@include theme-dark {
+		border-color: darken(get-theme-dark(off), 10);
+	}
+
+	@include theme(background, off);
+	@include theme(color, text);
 }
 
 input[type=text], textarea {
@@ -48,18 +54,19 @@ input[type=text], textarea {
 }
 
 .button {
-	color: $primary_color;
+	@include theme(color, primary);
 	font-weight: 300;
 	padding: $padding/4;
 	cursor: pointer;
-	border: 1px solid $primary_color;
+	border: 1px solid transparent;
+	@include theme(border-color, primary);
 	border-radius: $border_radius;
 	margin: 0 $padding/4;
 	transition: all 150ms;
 
 	&:hover {
-		background: $primary_color;
-		color: $background_color;
+		@include theme(background, primary);
+		color: #FFF;
 	}
 }
 
@@ -68,7 +75,8 @@ input[type=text], textarea {
 	height: 10px;
 	width: 10px;
 	border-radius: 50%;
-	background: $primary_color;
+	@include theme(background, primary);
+	will-change: transform, opacity;
 	transform: translate(-50%, -50%) scale(1) rotateZ(360deg);
 	opacity: 0.2;
 	transition: all 1.5s ease;
@@ -88,13 +96,12 @@ input[type=text], textarea {
 /* Header */
 .header {
 	width: $header_width;
-	min-width: $header_width;
 	position: relative;
 	z-index: 100;
+	height: 100%;
 
 	@include media-phablet {
 		width: $header_width_mobile;
-		min-width: $header_width_mobile;
 		z-index: 21;
 	}
 
@@ -110,7 +117,7 @@ input[type=text], textarea {
 	.navigation {
 
 		.logo {
-			background: $primary_color;
+			@include theme(background, primary);
 			display: block;
 			text-align: center;
 			position: relative;
@@ -165,6 +172,10 @@ input[type=text], textarea {
 				display: block;
 				position: relative;
 
+				&:hover {
+					@include theme(background, menu_off);
+				}
+
 				@include media-phablet {
 					line-height: $header_width_mobile - $padding;
 					height: $header_width_mobile;
@@ -201,10 +212,15 @@ input[type=text], textarea {
 
 	.donate {
 		position: absolute;
-		bottom: 44px + $padding/2;
+		bottom: 44px;
 		left: 0;
 		right: 0;
 		padding: $padding/2 $padding;
+		transition: background 200ms;
+
+		&:hover {
+			@include theme(background, menu_off);
+		}
 
 		&:before {
 			display: none;
@@ -229,13 +245,9 @@ input[type=text], textarea {
 	.menu, .search_form, .notification_menu  {
 		position: absolute;
 		z-index: 21;
-		bottom: $padding / 3;
+		bottom: 0;
 		width: 44px;
 		height: 44px;
-
-		@include media-phablet {
-			bottom: 0;
-		}
 
 		.wrapper {
 			min-width: 170px;
@@ -270,7 +282,7 @@ input[type=text], textarea {
 			color: #FFF;
 			top: 5px;
 			right: 0;
-			background: $primary_color;
+			@include theme(background, primary);
 			border-radius: 50%;
 			width: 18px;
 			height: 18px;
@@ -278,6 +290,8 @@ input[type=text], textarea {
 			text-align: center;
 			font-size: 10px;
 			font-weight: lighter;
+			z-index: 2;
+			pointer-events: none;
 		}
 
 		.wrapper {
@@ -329,7 +343,7 @@ input[type=text], textarea {
 	}
 
 	.menu  {
-		left: $padding / 3;
+		left: 0;
 
 		@include media-phablet {
 			bottom: 88px;
@@ -344,7 +358,7 @@ input[type=text], textarea {
 	}
 
 	.search_form {
-		right: $padding / 3;
+		right: 0;
 
 		@include media-phablet {
 			right: auto;
@@ -362,6 +376,12 @@ input[type=text], textarea {
 			padding-left: 4px;
 		}
 
+		a {
+			&:hover {
+				@include theme(background, menu_off);
+			}
+		}
+
 	}
 }
 
@@ -370,7 +390,7 @@ input[type=text], textarea {
 	position: absolute;
 	height: 10px;
 	width: 10px;
-	background: $primary_color;
+	@include theme(background, primary);
 	top: 0;
 	left: $header_width;
 
@@ -381,16 +401,21 @@ input[type=text], textarea {
 
 /* Content */
 .content {
-	position: relative;
+	position: absolute;
 	height: 100%;
-	flex: 1 auto;
+	top: 0;
+	left: $header_width;
+	right: 0;
+
+	@include media-phablet {
+		left: $header_width_mobile;
+	}
 
 	display: flex;
 	flex-flow: column nowrap;
 
-	background: $background_color;
+	@include theme(background, background);
 	border-radius: $border_radius 0 0 $border_radius;
-	//overflow: hidden;
 
 	h1, h2, h3 {
 		padding: 0;
@@ -455,7 +480,7 @@ input[type=text], textarea {
 		height: $header_height;
 		left: $header_width + $padding;
 		right: $padding;
-		background: $background_color;
+		@include theme(background, background);
 		border-radius: $border_radius 0 0 0;
 
 		@include media-phablet {
@@ -476,8 +501,13 @@ input[type=text], textarea {
 					font-size: 24px;
 					line-height: $header_height;
 					padding: 0 $padding;
-					color: rgba(0,0,0,.5);
+					@include theme(color, text);
+					opacity: .5;
 					vertical-align: bottom;
+
+					&:hover {
+						opacity: 1;
+					}
 
 					@include media-phablet {
 						font-size: 18px;
@@ -488,7 +518,7 @@ input[type=text], textarea {
 			}
 
 			.active a {
-				color: #000;
+				opacity: 1;
 			}
 		}
 
@@ -523,6 +553,11 @@ input[type=text], textarea {
 
 	a {
 		display: inline-block;
+		float: left;
+
+		&:hover {
+			@include theme(background, off);
+		}
 	}
 
 	.button {
@@ -539,18 +574,22 @@ input[type=text], textarea {
 		display: none;
 		position: absolute;
 		right: 0;
-		background: $primary_color;
+		@include theme(background, primary);
 		z-index: 5000;
 		box-shadow: 0 0 15px 2px rgba(0,0,0,.15);
 		border-radius: $border_radius 0 0 $border_radius;
 		transform-origin: 80% 0;
+
+		@include theme-dark {
+			box-shadow: 0 5px 15px 2px rgba(0,0,0,.4);
+		}
 
 		&:before {
 			transform: rotate(45deg) translateY(-60%);
 			content: '';
 			display: block;
 			position: absolute;
-			background: $primary_color;
+			@include theme(background, primary);
 			height: 10px;
 			width: 10px;
 			left: -9px;
@@ -558,12 +597,10 @@ input[type=text], textarea {
 			z-index: 1;
 			opacity: 1;
 			border-radius: $border_radius;
-//			border: 8px solid $primary_color;
-//			border-color: transparent $primary_color transparent transparent;
 		}
 
 		ul {
-			background: $background_color;
+			@include theme(background, background);
 			position: relative;
 			z-index: 2;
 			overflow: hidden;
@@ -573,7 +610,8 @@ input[type=text], textarea {
 		ul li {
 			display: block;
 			line-height: 1em;
-			border-top: 1px solid $theme_off;
+			border-top: 1px solid transparent;
+			@include theme(border-color, off);
 
 			&:first-child {
 				border-top: 0;
@@ -581,13 +619,14 @@ input[type=text], textarea {
 
 			a {
 				display: block;
-				color: $text_color;
+				@include theme(color, text);
 				padding: $padding/4 $padding/2;
 				font-size: 1em;
 				line-height: 22px;
+				width: 100%;
 
 				&:hover {
-
+					@include theme(background, off);
 				}
 			}
 
@@ -635,24 +674,28 @@ input[type=text], textarea {
 		font-weight: normal;
 		transform: scale(0);
 		transform-origin: 100% 50%;
-		background: $primary_color;
+		@include theme(background, primary);
 		margin-bottom: 4px;
 		border-radius: $border_radius;
 		box-shadow: 0 0 15px 2px rgba(0,0,0,.15);
 
+		@include theme-dark {
+			box-shadow: 0 5px 15px 2px rgba(0,0,0,.4);
+		}
+
 		.inner {
 			padding: 15px 30px 15px 20px;
-			background: $background_color;
+			@include theme(background, background);
 			margin-bottom: 4px;
 			border-radius: $border_radius;
 		}
 
 		&.sticky {
-			background-color: $primary_color;
+			@include theme(background-color, primary);
 		}
 
 		&.show {
-			max-height: 100px;
+			max-height: 130px;
 			transform: scale(1);
 		}
 
@@ -709,8 +752,8 @@ input[type=text], textarea {
 		transition: none;
 
 		&:hover {
-			background: #FFF;
-			color: $primary_color;
+			@include theme(background, primary);
+			color: #FFF;
 		}
 	}
 }
@@ -810,6 +853,10 @@ input[type=text], textarea {
 	.item {
 		display: flex;
 		border-bottom: 1px solid rgba(0,0,0,.2);
+
+		@include theme-dark {
+			border-color: rgba(255,255,255,.2);
+		}
 
 		&:last-child {
 			border-bottom: none;
