@@ -185,6 +185,7 @@ class Base(OCHProvider):
             return linksToMovieDetails
         except:
             log.debug('There are no search results to parse!')
+            import traceback; log.error(traceback.format_exc());
             return []
 
 
