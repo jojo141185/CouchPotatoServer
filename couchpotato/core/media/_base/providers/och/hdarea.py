@@ -150,7 +150,7 @@ class Base(OCHProvider):
         return res
 
     def parseMovieDetailPage(self, data):
-        dom = BeautifulSoup(data)
+        dom = BeautifulSoup(data, "html5lib")
         content = dom.find(id='content')
 
         topbox = content.findAll(attrs={"class": "topbox"}, recursive=False)
@@ -172,7 +172,7 @@ class Base(OCHProvider):
     def parseSearchResult(self, data):
         #print data
         try:
-            dom = BeautifulSoup(data)
+            dom = BeautifulSoup(data, "html5lib")
 
             content = dom.find(id='content')
             MovieEntries = content.find(attrs={"class": "whitecontent contentheight"}, recursive=False)
