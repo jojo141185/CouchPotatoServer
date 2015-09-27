@@ -38,7 +38,7 @@ class jDownloader(DownloaderBase):
             links = str([x for x in json.loads(data.get('url'))])
             response = self.call("linkgrabberv2/addLinks",{"links":links,"packageName": jd_packagename , "autostart": True})
 
-            time.sleep(10) # wait 5 seconds for adding links to JD
+            time.sleep(120) # wait 10 seconds for adding links to JD
             packageUUID = self.getUUIDbyPackageName(jd_packagename)
             if packageUUID:
                 return self.downloadReturnId(packageUUID)
