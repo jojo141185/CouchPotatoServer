@@ -4,14 +4,13 @@ import json
 import time
 import traceback
 import urllib
-import binascii
 import base64
 from Crypto.Cipher import AES
-from pip._vendor import requests
 from couchpotato.api import addApiView
 from couchpotato.core._base.downloader.main import DownloaderBase, ReleaseDownloadList
 from couchpotato.core.helpers.encoding import sp
 from couchpotato.core.logger import CPLog
+from libs import requests
 from libs.requests.exceptions import ConnectionError
 
 autoload = 'jDownloader'
