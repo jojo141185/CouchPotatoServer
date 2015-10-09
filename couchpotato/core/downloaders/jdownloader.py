@@ -34,7 +34,7 @@ class jDownloader(DownloaderBase):
         if self.conf('email') != "" and self.conf('password')!="" and self.API:
             if not self.API.reconnect():
                 log.error("Failed to reconnect to your MyJDAccount.")
-        elif self.conf('email') != "" and self.conf('password')!="":
+        elif self.conf('email') != "" and self.conf('password') != "":
             try:
                 self.API = jDownloaderAPI(self.conf('email'), self.conf('password'))
             except:
@@ -526,7 +526,7 @@ config = [{
             'list': 'download_providers',
             'name': 'jdownloader',
             'label': 'jDownloader',
-            'description': 'Use <a href="http://www.nzbvortex.com/landing/" target="_blank">NZBVortex</a> to download NZBs.',
+            'description': 'Use My JDownloader Service to download OCHs.',
             'wizard': True,
             'options': [
                 {
@@ -536,7 +536,7 @@ config = [{
                     'radio_group': 'OCH',
                 },
                 {
-                    'name': 'username',
+                    'name': 'email',
                     'description': 'Credentials for MyJD-Service',
                 },
                 {
