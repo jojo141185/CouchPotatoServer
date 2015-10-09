@@ -82,7 +82,7 @@ class jDownloader(DownloaderBase):
             links = ','.join(json.loads(data.get('url')))
             response = self._getDevice().addLinks(links, packageName, True)
 
-            time.sleep(10) # wait 120 seconds for adding links to JD
+            time.sleep(120) # wait 120 seconds for adding links to JD
             packageUUID = self.getUUIDbyPackageName(packageName)
             if packageUUID:
                 return self.downloadReturnId(packageUUID)
