@@ -87,17 +87,17 @@ class jDownloader(DownloaderBase):
         return self.downloadReturnId(packageName)
 
     def getAllDownloadStatus(self, ids):
-       """ Get status of all active downloads
-       :param ids: list of (mixed) downloader ids
+        """ Get status of all active downloads
+        :param ids: list of (mixed) downloader ids
            Used to match the releases for this downloader as there could be
            other downloaders active that it should ignore
-       :return: list of releases
-       """
+        :return: list of releases
+        """
 
-       status, raw_statuses = self._getDevice().getDownloadPackages()
+        status, raw_statuses = self._getDevice().getDownloadPackages()
 
-       release_downloads = ReleaseDownloadList(self)
-       for id in ids:
+        release_downloads = ReleaseDownloadList(self)
+        for id in ids:
            packages = raw_statuses.get('data', [])
            package_ids = [x['name'] for x in packages]
            if id in package_ids:
@@ -109,7 +109,7 @@ class jDownloader(DownloaderBase):
                #elif pkg.get('status','') #check for errors
                #    status = 'failed'
                 release_downloads.append({
-                   'id': packages[listIndex]['uuid'],
+                   'id': packages[listIndex]['name'],
                    'name': packages[listIndex]['name'],
                    'status': status,
                    'original_status': packages[listIndex].get('status',None),
@@ -117,13 +117,15 @@ class jDownloader(DownloaderBase):
                    'folder': sp(packages[listIndex]['saveTo']),
                 })
            else: #id not found in jd - mark as failed
+               log.info('NOT Found package marking as failed')
                release_downloads.append({
                    'id': id,
-                   'name': '',
+                   'name': id,
                    'status': 'failed',
                    'timeleft': -1,
                    'folder': '',
            })
+        return release_downloads
 
     def getUUIDbyPackageName(self, name):
         for query in [self._getDevice().getDownloadPackages, self._getDevice().getLinkgrabberPackages]:
