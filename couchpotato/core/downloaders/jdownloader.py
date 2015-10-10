@@ -77,25 +77,14 @@ class jDownloader(DownloaderBase):
         if not media: media = {}
         if not data: data = {}
 
+        packageName = self.createFileName(data, filedata, media)
+        links = ','.join(json.loads(data.get('url')))
         try:
-            packageName = self.createFileName(data, filedata, media)
-            links = ','.join(json.loads(data.get('url')))
-            response = self._getDevice().addLinks(links, packageName, True)
-
-            packageUUID = None
-            count = 0
-            while packageUUID == None and count < 10:
-                packageUUID = self.getUUIDbyPackageName(packageName)
-                count += 1
-                time.sleep(10)
-
-            if packageUUID:
-                return self.downloadReturnId(packageUUID)
-            else:
-                return False
+            self._getDevice().addLinks(links, packageName, True)
         except:
             log.error('Something went wrong sending the jDownloader file: %s', traceback.format_exc())
             return False
+        return self.downloadReturnId(packageName)
 
     def getAllDownloadStatus(self, ids):
        """ Get status of all active downloads
@@ -110,7 +99,7 @@ class jDownloader(DownloaderBase):
        release_downloads = ReleaseDownloadList(self)
        for id in ids:
            packages = raw_statuses.get('data', [])
-           package_ids = [x['uuid'] for x in packages]
+           package_ids = [x['name'] for x in packages]
            if id in package_ids:
                 listIndex = package_ids.index(id)
                 # Check status
