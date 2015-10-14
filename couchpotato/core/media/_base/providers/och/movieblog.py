@@ -191,7 +191,7 @@ class Base(OCHProvider):
                             hoster = None
                             link = None
                             i = 0
-                            while not hoster and not link and i < 5:
+                            while not link and i < 5:
                                 sibling = sibling.nextSibling
                                 link = recursiveSearch(sibling)
                                 i+=1
