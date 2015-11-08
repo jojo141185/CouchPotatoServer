@@ -160,7 +160,7 @@ class Base(OCHProvider):
 
         for paragraph in itertools.chain([anchor.parent], anchor.parent.next_siblings):
             if getattr(paragraph, 'text', False):
-                for sibling in paragraph.children:
+                for sibling in paragraph.descendants:
                     if getattr(sibling, 'text', False): # checks if text existent
                         #SIZE
                         keyWords_size = u'(größe:|groeße:|groesse:|size:)'
@@ -168,7 +168,7 @@ class Base(OCHProvider):
                             res['size'] = self.parseSize(sibling.nextSibling.replace(",", "."))
                             log.debug(u'Found size of release: %s MB' % res['size'])
 
-                         # IMDB
+                        # IMDB
                         keyWords_id = u'IMDb'
                         imdbUrl_pattern = u'(?P<id>tt[0-9]+)\/?'
                         if re.search(keyWords_id, sibling.text, re.I):
@@ -187,7 +187,7 @@ class Base(OCHProvider):
 
                         # DOWNLOAD
                         keyWords_dl = u'(download|mirror)(\s#?[1-9])?:'
-                        if re.search(keyWords_dl, sibling.text, re.I):
+                        if len(re.findall(keyWords_dl, sibling.text, re.I)) == 1:
                             hoster = None
                             link = None
                             i = 0
