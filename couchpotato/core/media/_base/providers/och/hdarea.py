@@ -17,7 +17,7 @@ rarPassword = 'hd-area.org'
 
 class Base(OCHProvider):
     urls = {
-        'search': 'http://www.hd-area.org/?s=search&q=%s',
+        'search': 'http://www.hd-area.org/',
     }
 
     def _searchOnTitle(self, title, movie, quality, results):
@@ -39,13 +39,10 @@ class Base(OCHProvider):
 
 
     def do_search(self, title, results):
-        query = '"%s"' % (simplifyString(title))
-        searchUrl = self.urls['search'] % query
-
-        log.debug('fetching data from %s' % searchUrl)
+        query = '%s' % (simplifyString(title))
 
         #TODO: Search result has more than one page <vorwaerts> link
-        data = self.getHTMLData(searchUrl)
+        data = self.getHTMLData(self.urls['search'], data={'q': query,'s': 'search'})
 
         linksToMovieDetails = self.parseSearchResult(data)
         for movieDetailLink in linksToMovieDetails:
