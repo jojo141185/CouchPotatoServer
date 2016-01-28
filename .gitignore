@@ -4,7 +4,9 @@
 /_source/
 .project
 .pydevproject
-node_modules
-.tmp
-.idea
-Thumbs.db
+/node_modules/
+/.tmp/
+/.sass-cache/
+.coverage
+coverage.xml
+nosetests.xml
