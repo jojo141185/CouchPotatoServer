@@ -24,10 +24,6 @@ class Base(OCHProvider):
         'search': 'http://www.movie-blog.org/index.php',
     }
 
-    def getHTMLData(self, url, **kwargs):
-        return super(Base, self).getHTMLData(url, headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36"}, **kwargs)
-
-
     # function gets called for every title in possibleTitles
     def _searchOnTitle(self, title, movie, quality, results):
         newResults = []
