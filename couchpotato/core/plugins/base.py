@@ -332,6 +332,12 @@ class Plugin(object):
                 if 'cache_timeout' in kwargs:
                     cache_timeout = kwargs.get('cache_timeout')
                     del kwargs['cache_timeout']
+                if 'headers' in kwargs:
+                    headers = kwargs.get('headers')
+                    for item in headers:
+                        if isinstance(headers.get(item), int) or isinstance(headers.get(item), float):
+                            headers[item] = str(headers.get(item))
+                    kwargs['headers'] = headers
 
                 data = self.urlopen(url, **kwargs)
                 if data and cache_timeout > 0 and use_cache:
