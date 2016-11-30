@@ -29,7 +29,7 @@ class Updater(Plugin):
 
     available_notified = False
     _lock = RLock()
-    last_check = 'updater.last_check'
+    last_check = 'updater.last_checked'
 
     def __init__(self):
 
@@ -98,7 +98,7 @@ class Updater(Plugin):
                     if self.conf('notification'):
                         info = self.updater.info()
                         version_date = datetime.fromtimestamp(info['update_version']['date'])
-                        fireEvent('updater.updated', 'Updated to a new version with hash "%s", this version is from %s' % (info['update_version']['hash'], version_date), data = info)
+                        fireEvent('updater.updated', 'CouchPotato: Updated to a new version with hash "%s", this version is from %s' % (info['update_version']['hash'], version_date), data = info)
                 except:
                     log.error('Failed notifying for update: %s', traceback.format_exc())
 

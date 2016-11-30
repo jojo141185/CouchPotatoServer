@@ -1,3 +1,4 @@
+
 import re
 import json
 import traceback
@@ -20,11 +21,19 @@ class Base(TorrentProvider):
     }
 
     http_time_between_calls = 1  # Seconds
+    login_fail_msg = 'Your apikey is not valid! Go to HD4Free and reset your apikey.'
 
     def _search(self, movie, quality, results):
         data = self.getJsonData(self.urls['search'] % (self.conf('apikey'), self.conf('username'), getIdentifier(movie), self.conf('internal_only')))
 
         if data:
+            if 'error' in data:
+                if self.login_fail_msg in data['error']: # Check for login failure
+                    self.disableAccount()
+                else:
+                    log.error('%s returned an error (possible rate limit): %s', (self.getName(), data['error']))
+                return
+
             try:
                 #for result in data[]:
                 for key, result in data.iteritems():

@@ -916,7 +916,7 @@ Remove it if you want it to be renamed (again, or at least let it try again)
 
         replaces = [
             ('\.+', '.'), ('_+', '_'), ('-+', '-'), ('\s+', ' '), (' \\\\', '\\\\'), (' /', '/'),
-            ('(\s\.)+', '.'), ('(-\.)+', '.'), ('(\s-[^\s])+', '-'),
+            ('(\s\.)+', '.'), ('(-\.)+', '.'), ('(\s-[^\s])+', '-'), (' ]', ']'),
         ]
 
         for r in replaces:
@@ -1390,7 +1390,7 @@ config = [{
                     'advanced': True,
                     'name': 'unrar_modify_date',
                     'type': 'bool',
-                    'description': ('Set modify date of unrar-ed files to the rar-file\'s date.', 'This will allow XBMC to recognize extracted files as recently added even if the movie was released some time ago.'),
+                    'description': ('Set modify date of unrar-ed files to the rar-file\'s date.', 'This will allow Kodi to recognize extracted files as recently added even if the movie was released some time ago.'),
                     'default': False,
                 },
                 {
